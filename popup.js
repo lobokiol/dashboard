@@ -152,7 +152,7 @@ function addCustomAsset() {
   createAssetRows();
   updateValuations();
   scheduleSave();
-  showAssetMessage(`${symbol} 已添加，将通过${type === 'crypto' ? ' OKX' : ' Yahoo Finance'} 获取价格`);
+  showAssetMessage(`${symbol} 已添加`);
   refreshPrices();
 }
 
