@@ -1,5 +1,7 @@
 图示：
-<img width="206" height="272" alt="image" src="https://github.com/user-attachments/assets/4baec307-d7f0-4b15-b310-6c3eecf5d169" />
+
+<img width="227" height="311" alt="image" src="https://github.com/user-attachments/assets/cc4a4b8c-a40b-443f-aca7-142d40eaa4b3" />
+
 <img width="547" height="744" alt="image" src="https://github.com/user-attachments/assets/fc4781f9-e93e-4ba9-bf8c-79207994cc6e" />
 
 
