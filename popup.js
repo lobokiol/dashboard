@@ -32,7 +32,6 @@ let assets = assetDefinitions.map(asset => asset.symbol);
 let priceCurrency = 'USD';
 let totalCurrency = 'CNY';
 let usdCnyRate = defaultUsdCnyRate;
-let hasLiveExchangeRate = false;
 let saveTimer;
 
 const rows = document.getElementById('assetRows');
@@ -46,11 +45,6 @@ const addAssetButton = document.getElementById('addAssetButton');
 const assetMessage = document.getElementById('assetMessage');
 const priceCurrencySelect = document.getElementById('priceCurrencySelect');
 const totalCurrencySelect = document.getElementById('totalCurrencySelect');
-const exchangeRate = document.getElementById('exchangeRate');
-const cryptoSourceSymbols = document.getElementById('cryptoSourceSymbols');
-const stockSourceSymbols = document.getElementById('stockSourceSymbols');
-const statusText = document.getElementById('statusText');
-const updatedAt = document.getElementById('updatedAt');
 const refreshButton = document.getElementById('refreshButton');
 const settingsButton = document.getElementById('settingsButton');
 const backButton = document.getElementById('backButton');
@@ -129,16 +123,9 @@ function createAssetRows() {
     });
   });
 
-  updateSourceDetails();
-
   holdingRows.querySelectorAll('[data-remove-asset]').forEach(button => {
     button.addEventListener('click', () => removeAsset(button.dataset.removeAsset));
   });
-}
-
-function updateSourceDetails() {
-  cryptoSourceSymbols.textContent = cryptos.join('、') || '暂无';
-  stockSourceSymbols.textContent = stocks.join('、') || '暂无';
 }
 
 function showAssetMessage(message, isError = false) {
@@ -209,14 +196,12 @@ function updateValuations() {
   totalValue.textContent = totalCurrency === 'CNY'
     ? formatCny(displayTotal)
     : formatUsd(displayTotal);
-  exchangeRate.textContent = `USD/CNY ${usdCnyRate.toFixed(4)}${hasLiveExchangeRate ? '' : ' · 默认'}`;
 }
 
 function scheduleSave() {
   clearTimeout(saveTimer);
   saveTimer = setTimeout(() => {
     chrome.storage.local.set({ holdings, assetDefinitions, priceCurrency, totalCurrency });
-    statusText.textContent = '设置已保存';
   }, 250);
 }
 
@@ -285,7 +270,6 @@ function getStockPrices() {
 
 async function refreshPrices() {
   refreshButton.disabled = true;
-  statusText.textContent = '正在获取行情…';
 
   const [cryptoResult, stockResult] = await Promise.allSettled([
     getCryptoPrices(),
@@ -296,7 +280,6 @@ async function refreshPrices() {
   const receivedRate = Number(stockPrices[exchangeRateSymbol]);
   if (Number.isFinite(receivedRate) && receivedRate > 0) {
     usdCnyRate = receivedRate;
-    hasLiveExchangeRate = true;
   }
 
   prices = {
@@ -305,22 +288,6 @@ async function refreshPrices() {
   };
 
   updateValuations();
-
-  const failedSources = [];
-  if (cryptoResult.status === 'rejected') failedSources.push('OKX');
-  if (
-    stockResult.status === 'rejected' ||
-    (stockResult.status === 'fulfilled' && stockResult.value.errors.length)
-  ) failedSources.push('Yahoo Finance 部分');
-
-  statusText.textContent = failedSources.length
-    ? `${failedSources.join('、')} 行情获取失败`
-    : '全部行情已更新';
-  const time = new Date().toLocaleTimeString('zh-CN', {
-    hour: '2-digit',
-    minute: '2-digit'
-  });
-  updatedAt.textContent = `${time} · 5 分钟刷新`;
   refreshButton.disabled = false;
 }
 

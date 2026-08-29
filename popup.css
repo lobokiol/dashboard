@@ -239,8 +239,7 @@ h2 {
   border-color: #b8bec7;
 }
 
-.setting-row,
-.source-row {
+.setting-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -250,14 +249,12 @@ h2 {
   border-bottom: 1px solid var(--line);
 }
 
-.setting-row:last-child,
-.source-row:last-child {
+.setting-row:last-child {
   border-bottom: 0;
 }
 
 .setting-row > span,
-.setting-row > label,
-.source-row span {
+.setting-row > label {
   color: var(--muted);
 }
 
@@ -337,24 +334,4 @@ h2 {
   text-overflow: ellipsis;
   white-space: nowrap;
   text-align: right;
-}
-
-.source-row {
-  align-items: flex-start;
-}
-
-.source-row div strong,
-.source-row div span {
-  display: block;
-}
-
-.source-row div span {
-  margin-top: 2px;
-  font-size: 8px;
-}
-
-.source-row > span {
-  padding-top: 1px;
-  text-align: right;
-  white-space: nowrap;
 }
