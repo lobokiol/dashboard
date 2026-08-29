@@ -4,6 +4,7 @@ const STOCK_SYMBOL_PATTERN = /^[A-Z0-9.^=-]{1,12}$/;
 const EXCHANGE_RATE_SYMBOL = 'CNY=X';
 const MILESTONE_ALARM = 'portfolio-milestone-check';
 const MILESTONE_THRESHOLDS = [500000, 1000000];
+const MILESTONE_STATE_VERSION = 2;
 const DEFAULT_MILESTONE_ALERTS = {
   500000: true,
   1000000: true
@@ -113,18 +114,24 @@ async function checkMilestones(totalCny) {
   try {
     const stored = await chrome.storage.local.get({
       milestoneAlerts: DEFAULT_MILESTONE_ALERTS,
-      milestoneState: null
+      milestoneState: null,
+      milestoneStateVersion: 0
     });
     const alerts = stored.milestoneAlerts && typeof stored.milestoneAlerts === 'object'
       ? stored.milestoneAlerts
       : DEFAULT_MILESTONE_ALERTS;
     const result = PortfolioCore.getMilestoneCrossings(
-      stored.milestoneState,
+      stored.milestoneStateVersion === MILESTONE_STATE_VERSION
+        ? stored.milestoneState
+        : { '500000': false, '1000000': false },
       totalCny,
       MILESTONE_THRESHOLDS
     );
 
-    await chrome.storage.local.set({ milestoneState: result.state });
+    await chrome.storage.local.set({
+      milestoneState: result.state,
+      milestoneStateVersion: MILESTONE_STATE_VERSION
+    });
     result.crossings.forEach(threshold => {
       if (alerts[String(threshold)] !== false) createNotification(threshold, totalCny);
     });

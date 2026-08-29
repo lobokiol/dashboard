@@ -44,6 +44,7 @@ const holdingRows = document.getElementById('holdingRows');
 const mainView = document.getElementById('mainView');
 const settingsView = document.getElementById('settingsView');
 const totalValue = document.getElementById('totalValue');
+const milestoneNotice = document.getElementById('milestoneNotice');
 const assetTypeSelect = document.getElementById('assetTypeSelect');
 const assetSymbolInput = document.getElementById('assetSymbolInput');
 const addAssetButton = document.getElementById('addAssetButton');
@@ -204,6 +205,14 @@ function updateValuations() {
   totalValue.textContent = totalCurrency === 'CNY'
     ? formatCny(displayTotal)
     : formatUsd(displayTotal);
+
+  const reachedMilestones = [500000, 1000000]
+    .filter(threshold => Number.isFinite(portfolioCny) && portfolioCny >= threshold)
+    .map(threshold => formatCny(threshold));
+  milestoneNotice.hidden = reachedMilestones.length === 0;
+  milestoneNotice.textContent = reachedMilestones.length
+    ? `提醒：人民币合计已达 ${reachedMilestones.join('、')}`
+    : '';
 
   if (Number.isFinite(portfolioCny)) {
     chrome.runtime.sendMessage({ type: 'CHECK_TOTAL_MILESTONES', totalCny: portfolioCny }, () => {
