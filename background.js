@@ -4,7 +4,7 @@ const STOCK_SYMBOL_PATTERN = /^[A-Z0-9.^=-]{1,12}$/;
 const EXCHANGE_RATE_SYMBOL = 'CNY=X';
 const MILESTONE_ALARM = 'portfolio-milestone-check';
 const MILESTONE_THRESHOLDS = [500000, 1000000];
-const MILESTONE_STATE_VERSION = 2;
+const MILESTONE_STATE_VERSION = 3;
 const DEFAULT_MILESTONE_ALERTS = {
   500000: true,
   1000000: true
