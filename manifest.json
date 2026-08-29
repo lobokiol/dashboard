@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Price Dashboard",
-  "version": "1.7.9",
+  "version": "1.8.0",
   "description": "实时加密货币、股票价格与持仓资产估值",
   "action": {
     "default_popup": "popup.html"
@@ -10,7 +10,9 @@
     "service_worker": "background.js"
   },
   "permissions": [
-    "storage"
+    "storage",
+    "alarms",
+    "notifications"
   ],
   "host_permissions": [
     "https://www.okx.com/*",

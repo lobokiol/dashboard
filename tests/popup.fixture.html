@@ -64,6 +64,18 @@
           </select>
         </div>
       </section>
+
+      <section class="settings-section">
+        <h2>总额提醒</h2>
+        <div class="setting-row">
+          <label for="milestone500kToggle">达到 ¥500,000</label>
+          <input id="milestone500kToggle" class="milestone-toggle" type="checkbox" checked>
+        </div>
+        <div class="setting-row">
+          <label for="milestone1mToggle">达到 ¥1,000,000</label>
+          <input id="milestone1mToggle" class="milestone-toggle" type="checkbox" checked>
+        </div>
+      </section>
     </section>
   </main>
 
@@ -78,6 +90,7 @@
             window.__savedAssetDefinitions = value.assetDefinitions;
             window.__savedPriceCurrency = value.priceCurrency;
             window.__savedTotalCurrency = value.totalCurrency;
+            window.__savedMilestoneAlerts = value.milestoneAlerts;
           }
         }
       },

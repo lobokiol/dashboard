@@ -33,5 +33,30 @@
     return numericValue * numericRate;
   }
 
-  return { normalizeQuantity, calculateValue, calculateTotal, convertUsdToCny };
+  function getMilestoneCrossings(previousState, totalCny, thresholds) {
+    const state = previousState && typeof previousState === 'object' ? previousState : {};
+    const numericTotal = Number(totalCny);
+    const nextState = {};
+    const crossings = [];
+
+    thresholds.forEach(threshold => {
+      const numericThreshold = Number(threshold);
+      if (!Number.isFinite(numericThreshold) || numericThreshold <= 0) return;
+
+      const key = String(numericThreshold);
+      const isAbove = Number.isFinite(numericTotal) && numericTotal >= numericThreshold;
+      if (state[key] === false && isAbove) crossings.push(numericThreshold);
+      nextState[key] = isAbove;
+    });
+
+    return { crossings, state: nextState };
+  }
+
+  return {
+    normalizeQuantity,
+    calculateValue,
+    calculateTotal,
+    convertUsdToCny,
+    getMilestoneCrossings
+  };
 });

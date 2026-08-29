@@ -24,3 +24,20 @@ test('converts portfolio value from USD to CNY', () => {
   assert.equal(PortfolioCore.convertUsdToCny(12500, 7.2), 90000);
   assert.equal(PortfolioCore.convertUsdToCny(12500, 0), null);
 });
+
+test('detects total milestone crossings without repeating above a threshold', () => {
+  const thresholds = [500000, 1000000];
+  const firstReading = PortfolioCore.getMilestoneCrossings({}, 600000, thresholds);
+  assert.deepEqual(firstReading.crossings, []);
+  assert.deepEqual(firstReading.state, { '500000': true, '1000000': false });
+
+  const crossed = PortfolioCore.getMilestoneCrossings(firstReading.state, 1000000, thresholds);
+  assert.deepEqual(crossed.crossings, [1000000]);
+
+  const repeated = PortfolioCore.getMilestoneCrossings(crossed.state, 1100000, thresholds);
+  assert.deepEqual(repeated.crossings, []);
+
+  const reset = PortfolioCore.getMilestoneCrossings(repeated.state, 400000, thresholds);
+  const recrossed = PortfolioCore.getMilestoneCrossings(reset.state, 550000, thresholds);
+  assert.deepEqual(recrossed.crossings, [500000]);
+});

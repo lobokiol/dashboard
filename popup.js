@@ -12,6 +12,10 @@ const customSymbolPattern = /^[A-Z0-9.^=-]{1,12}$/;
 const exchangeRateSymbol = 'CNY=X';
 const refreshIntervalMs = 5 * 60 * 1000;
 const defaultUsdCnyRate = 7.2;
+const defaultMilestoneAlerts = {
+  500000: true,
+  1000000: true
+};
 const defaultHoldings = {
   BTC: 0,
   ADA: 10000,
@@ -32,6 +36,7 @@ let assets = assetDefinitions.map(asset => asset.symbol);
 let priceCurrency = 'USD';
 let totalCurrency = 'CNY';
 let usdCnyRate = defaultUsdCnyRate;
+let milestoneAlerts = { ...defaultMilestoneAlerts };
 let saveTimer;
 
 const rows = document.getElementById('assetRows');
@@ -45,6 +50,8 @@ const addAssetButton = document.getElementById('addAssetButton');
 const assetMessage = document.getElementById('assetMessage');
 const priceCurrencySelect = document.getElementById('priceCurrencySelect');
 const totalCurrencySelect = document.getElementById('totalCurrencySelect');
+const milestone500kToggle = document.getElementById('milestone500kToggle');
+const milestone1mToggle = document.getElementById('milestone1mToggle');
 const refreshButton = document.getElementById('refreshButton');
 const settingsButton = document.getElementById('settingsButton');
 const backButton = document.getElementById('backButton');
@@ -190,18 +197,25 @@ function updateValuations() {
   });
 
   const portfolioUsd = PortfolioCore.calculateTotal(prices, holdings);
+  const portfolioCny = PortfolioCore.convertUsdToCny(portfolioUsd, usdCnyRate);
   const displayTotal = totalCurrency === 'CNY'
     ? PortfolioCore.convertUsdToCny(portfolioUsd, usdCnyRate)
     : portfolioUsd;
   totalValue.textContent = totalCurrency === 'CNY'
     ? formatCny(displayTotal)
     : formatUsd(displayTotal);
+
+  if (Number.isFinite(portfolioCny)) {
+    chrome.runtime.sendMessage({ type: 'CHECK_TOTAL_MILESTONES', totalCny: portfolioCny }, () => {
+      void chrome.runtime.lastError;
+    });
+  }
 }
 
 function scheduleSave() {
   clearTimeout(saveTimer);
   saveTimer = setTimeout(() => {
-    chrome.storage.local.set({ holdings, assetDefinitions, priceCurrency, totalCurrency });
+    chrome.storage.local.set({ holdings, assetDefinitions, priceCurrency, totalCurrency, milestoneAlerts });
   }, 250);
 }
 
@@ -212,7 +226,8 @@ function loadHoldings() {
       assetDefinitions: null,
       customAssets: [],
       priceCurrency: 'USD',
-      totalCurrency: 'CNY'
+      totalCurrency: 'CNY',
+      milestoneAlerts: defaultMilestoneAlerts
     }, result => {
       const savedDefinitions = Array.isArray(result.assetDefinitions)
         ? result.assetDefinitions
@@ -227,8 +242,17 @@ function loadHoldings() {
       }, {});
       priceCurrency = result.priceCurrency === 'CNY' ? 'CNY' : 'USD';
       totalCurrency = result.totalCurrency === 'USD' ? 'USD' : 'CNY';
+      const savedMilestoneAlerts = result.milestoneAlerts && typeof result.milestoneAlerts === 'object'
+        ? result.milestoneAlerts
+        : defaultMilestoneAlerts;
+      milestoneAlerts = {
+        500000: savedMilestoneAlerts['500000'] !== false,
+        1000000: savedMilestoneAlerts['1000000'] !== false
+      };
       priceCurrencySelect.value = priceCurrency;
       totalCurrencySelect.value = totalCurrency;
+      milestone500kToggle.checked = milestoneAlerts['500000'];
+      milestone1mToggle.checked = milestoneAlerts['1000000'];
       resolve();
     });
   });
@@ -313,6 +337,12 @@ totalCurrencySelect.addEventListener('change', event => {
   totalCurrency = event.target.value === 'USD' ? 'USD' : 'CNY';
   updateValuations();
   scheduleSave();
+});
+[milestone500kToggle, milestone1mToggle].forEach(toggle => {
+  toggle.addEventListener('change', event => {
+    milestoneAlerts[event.target.id === 'milestone500kToggle' ? '500000' : '1000000'] = event.target.checked;
+    scheduleSave();
+  });
 });
 initialize();
 setInterval(refreshPrices, refreshIntervalMs);

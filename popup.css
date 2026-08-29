@@ -313,6 +313,13 @@ h2 {
   outline-offset: 1px;
 }
 
+.milestone-toggle {
+  width: 12px;
+  height: 12px;
+  margin: 0;
+  accent-color: var(--accent);
+}
+
 .asset-form {
   display: grid;
   grid-template-columns: 1fr 1fr auto;
