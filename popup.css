@@ -1,0 +1,294 @@
+:root {
+  color-scheme: light;
+  --background: #f6f7f9;
+  --surface: #ffffff;
+  --line: #e2e5e9;
+  --text: #171a21;
+  --muted: #747b87;
+  --accent: #2563eb;
+  --danger: #c2413b;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+html,
+body {
+  width: 116px;
+  min-width: 116px;
+  margin: 0;
+}
+
+html.settings-mode,
+html.settings-mode body {
+  width: 300px;
+  min-width: 300px;
+}
+
+body {
+  overflow-x: hidden;
+  background: var(--surface);
+  color: var(--text);
+  font-family: "Segoe UI", "Microsoft YaHei UI", sans-serif;
+  font-size: 10px;
+}
+
+button,
+input {
+  font: inherit;
+}
+
+.dashboard {
+  padding: 4px;
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+  margin-bottom: 2px;
+  min-height: 20px;
+}
+
+h1,
+h2 {
+  margin: 0;
+}
+
+h1 {
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.portfolio-summary {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  min-width: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.portfolio-summary h1 {
+  font-size: 10px;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.portfolio-summary strong {
+  font-size: 10px;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+#mainView .topbar {
+  gap: 2px;
+}
+
+#settingsButton {
+  padding-right: 4px;
+  padding-left: 4px;
+}
+
+h2 {
+  padding: 5px 6px;
+  border-bottom: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 9px;
+  font-weight: 600;
+}
+
+.plain-button {
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  padding: 2px 6px;
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+}
+
+.plain-button:hover {
+  border-color: #b8bec7;
+}
+
+.plain-button:disabled {
+  cursor: wait;
+  opacity: 0.55;
+}
+
+.plain-button:focus-visible,
+.quantity-input:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.asset-list,
+.settings-section {
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--surface);
+}
+
+.asset-header,
+.asset-row {
+  display: grid;
+  grid-template-columns: 30px 64px;
+  align-items: center;
+  gap: 2px;
+  padding: 3px 5px;
+}
+
+.asset-header {
+  border-bottom: 1px solid var(--line);
+  background: #f1f3f5;
+  color: var(--muted);
+  font-size: 8px;
+}
+
+.asset-header span:not(:first-child),
+.asset-row > :not(:first-child) {
+  text-align: right;
+}
+
+.asset-row {
+  padding-top: 1px;
+  padding-bottom: 1px;
+  border-bottom: 1px solid var(--line);
+}
+
+.asset-row:last-child {
+  border-bottom: 0;
+}
+
+.symbol {
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+}
+
+.price {
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.unavailable {
+  color: var(--danger);
+}
+
+.settings-view {
+  max-height: 588px;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.settings-section + .settings-section {
+  margin-top: 5px;
+}
+
+.holding-list {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+}
+
+.holding-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+  min-height: 28px;
+  padding: 3px 6px;
+  border-bottom: 1px solid var(--line);
+}
+
+.holding-row:nth-child(odd) {
+  border-right: 1px solid var(--line);
+}
+
+.holding-row:nth-last-child(-n + 2) {
+  border-bottom: 0;
+}
+
+.quantity-input {
+  width: 72px;
+  min-width: 0;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  padding: 2px 4px;
+  background: var(--surface);
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.quantity-input:hover {
+  border-color: #b8bec7;
+}
+
+.setting-row,
+.source-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 7px;
+  min-height: 26px;
+  padding: 4px 6px;
+  border-bottom: 1px solid var(--line);
+}
+
+.setting-row:last-child,
+.source-row:last-child {
+  border-bottom: 0;
+}
+
+.setting-row > span,
+.setting-row > label,
+.source-row span {
+  color: var(--muted);
+}
+
+.setting-row select {
+  max-width: 150px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  padding: 2px 4px;
+  background: var(--surface);
+  color: var(--text);
+}
+
+.setting-row select:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.setting-row strong {
+  max-width: 240px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: right;
+}
+
+.source-row {
+  align-items: flex-start;
+}
+
+.source-row div strong,
+.source-row div span {
+  display: block;
+}
+
+.source-row div span {
+  margin-top: 2px;
+  font-size: 8px;
+}
+
+.source-row > span {
+  padding-top: 1px;
+  text-align: right;
+  white-space: nowrap;
+}
