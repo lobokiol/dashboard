@@ -12,10 +12,6 @@ const customSymbolPattern = /^[A-Z0-9.^=-]{1,12}$/;
 const exchangeRateSymbol = 'CNY=X';
 const refreshIntervalMs = 5 * 60 * 1000;
 const defaultUsdCnyRate = 7.2;
-const defaultMilestoneAlerts = {
-  500000: true,
-  1000000: true
-};
 const defaultHoldings = {
   BTC: 0,
   ADA: 10000,
@@ -36,7 +32,6 @@ let assets = assetDefinitions.map(asset => asset.symbol);
 let priceCurrency = 'USD';
 let totalCurrency = 'CNY';
 let usdCnyRate = defaultUsdCnyRate;
-let milestoneAlerts = { ...defaultMilestoneAlerts };
 let saveTimer;
 
 const rows = document.getElementById('assetRows');
@@ -44,7 +39,9 @@ const holdingRows = document.getElementById('holdingRows');
 const mainView = document.getElementById('mainView');
 const settingsView = document.getElementById('settingsView');
 const totalValue = document.getElementById('totalValue');
-const milestoneNotice = document.getElementById('milestoneNotice');
+const milestoneDialog = document.getElementById('milestoneDialog');
+const milestoneDialogMessage = document.getElementById('milestoneDialogMessage');
+const milestoneDialogClose = document.getElementById('milestoneDialogClose');
 const assetTypeSelect = document.getElementById('assetTypeSelect');
 const assetSymbolInput = document.getElementById('assetSymbolInput');
 const addAssetButton = document.getElementById('addAssetButton');
@@ -141,6 +138,13 @@ function showAssetMessage(message, isError = false) {
   assetMessage.classList.toggle('error', isError);
 }
 
+function showMilestoneDialog(thresholds, totalCny) {
+  const milestoneText = thresholds.map(formatCny).join('、');
+  milestoneDialogMessage.textContent = `人民币合计已突破 ${milestoneText}，当前约 ${formatCny(totalCny)}`;
+  milestoneDialog.hidden = false;
+  milestoneDialogClose.focus();
+}
+
 function addCustomAsset() {
   const symbol = assetSymbolInput.value.trim().toUpperCase();
   const type = assetTypeSelect.value === 'stock' ? 'stock' : 'crypto';
@@ -206,17 +210,12 @@ function updateValuations() {
     ? formatCny(displayTotal)
     : formatUsd(displayTotal);
 
-  const reachedMilestones = [500000, 1000000]
-    .filter(threshold => Number.isFinite(portfolioCny) && portfolioCny >= threshold)
-    .map(threshold => formatCny(threshold));
-  milestoneNotice.hidden = reachedMilestones.length === 0;
-  milestoneNotice.textContent = reachedMilestones.length
-    ? `提醒：人民币合计已达 ${reachedMilestones.join('、')}`
-    : '';
-
   if (Number.isFinite(portfolioCny)) {
-    chrome.runtime.sendMessage({ type: 'CHECK_TOTAL_MILESTONES', totalCny: portfolioCny }, () => {
+    chrome.runtime.sendMessage({ type: 'CHECK_TOTAL_MILESTONES', totalCny: portfolioCny }, response => {
       void chrome.runtime.lastError;
+      if (response?.ok && response.crossings?.length) {
+        showMilestoneDialog(response.crossings, portfolioCny);
+      }
     });
   }
 }
@@ -224,7 +223,7 @@ function updateValuations() {
 function scheduleSave() {
   clearTimeout(saveTimer);
   saveTimer = setTimeout(() => {
-    chrome.storage.local.set({ holdings, assetDefinitions, priceCurrency, totalCurrency, milestoneAlerts });
+    chrome.storage.local.set({ holdings, assetDefinitions, priceCurrency, totalCurrency });
   }, 250);
 }
 
@@ -235,8 +234,7 @@ function loadHoldings() {
       assetDefinitions: null,
       customAssets: [],
       priceCurrency: 'USD',
-      totalCurrency: 'CNY',
-      milestoneAlerts: defaultMilestoneAlerts
+      totalCurrency: 'CNY'
     }, result => {
       const savedDefinitions = Array.isArray(result.assetDefinitions)
         ? result.assetDefinitions
@@ -251,17 +249,8 @@ function loadHoldings() {
       }, {});
       priceCurrency = result.priceCurrency === 'CNY' ? 'CNY' : 'USD';
       totalCurrency = result.totalCurrency === 'USD' ? 'USD' : 'CNY';
-      const savedMilestoneAlerts = result.milestoneAlerts && typeof result.milestoneAlerts === 'object'
-        ? result.milestoneAlerts
-        : defaultMilestoneAlerts;
-      milestoneAlerts = {
-        500000: savedMilestoneAlerts['500000'] !== false,
-        1000000: savedMilestoneAlerts['1000000'] !== false
-      };
       priceCurrencySelect.value = priceCurrency;
       totalCurrencySelect.value = totalCurrency;
-      milestone500kToggle.checked = milestoneAlerts['500000'];
-      milestone1mToggle.checked = milestoneAlerts['1000000'];
       resolve();
     });
   });
@@ -347,11 +336,8 @@ totalCurrencySelect.addEventListener('change', event => {
   updateValuations();
   scheduleSave();
 });
-[milestone500kToggle, milestone1mToggle].forEach(toggle => {
-  toggle.addEventListener('change', event => {
-    milestoneAlerts[event.target.id === 'milestone500kToggle' ? '500000' : '1000000'] = event.target.checked;
-    scheduleSave();
-  });
+milestoneDialogClose.addEventListener('click', () => {
+  milestoneDialog.hidden = true;
 });
 initialize();
 setInterval(refreshPrices, refreshIntervalMs);

@@ -24,7 +24,6 @@
         </div>
         <div id="assetRows"></div>
       </section>
-      <div id="milestoneNotice" class="milestone-notice" role="status" aria-live="polite" hidden></div>
       <p class="portfolio-note">　　耐心持有或持续dca，即持续复利，才可以赚到人生中，改变命运的财富。</p>
     </section>
 
@@ -70,19 +69,13 @@
           </select>
         </div>
       </section>
-
-      <section class="settings-section">
-        <h2>总额提醒</h2>
-        <div class="setting-row">
-          <label for="milestone500kToggle">达到 ¥500,000</label>
-          <input id="milestone500kToggle" class="milestone-toggle" type="checkbox" checked>
-        </div>
-        <div class="setting-row">
-          <label for="milestone1mToggle">达到 ¥1,000,000</label>
-          <input id="milestone1mToggle" class="milestone-toggle" type="checkbox" checked>
-        </div>
-      </section>
     </section>
+
+    <div id="milestoneDialog" class="milestone-dialog" role="alertdialog" aria-modal="true" aria-labelledby="milestoneDialogTitle" aria-describedby="milestoneDialogMessage" hidden>
+      <strong id="milestoneDialogTitle">资产总额提醒</strong>
+      <p id="milestoneDialogMessage"></p>
+      <button id="milestoneDialogClose" class="plain-button" type="button">知道了</button>
+    </div>
   </main>
 
   <script src="portfolio.js"></script>

@@ -5,10 +5,6 @@ const EXCHANGE_RATE_SYMBOL = 'CNY=X';
 const MILESTONE_ALARM = 'portfolio-milestone-check';
 const MILESTONE_THRESHOLDS = [500000, 1000000];
 const MILESTONE_STATE_VERSION = 3;
-const DEFAULT_MILESTONE_ALERTS = {
-  500000: true,
-  1000000: true
-};
 const DEFAULT_ASSET_DEFINITIONS = [
   { symbol: 'BTC', type: 'crypto' },
   { symbol: 'ADA', type: 'crypto' },
@@ -108,18 +104,14 @@ function createNotification(threshold, totalCny) {
 }
 
 async function checkMilestones(totalCny) {
-  if (milestoneCheckInProgress) return;
+  if (milestoneCheckInProgress) return [];
   milestoneCheckInProgress = true;
 
   try {
     const stored = await chrome.storage.local.get({
-      milestoneAlerts: DEFAULT_MILESTONE_ALERTS,
       milestoneState: null,
       milestoneStateVersion: 0
     });
-    const alerts = stored.milestoneAlerts && typeof stored.milestoneAlerts === 'object'
-      ? stored.milestoneAlerts
-      : DEFAULT_MILESTONE_ALERTS;
     const result = PortfolioCore.getMilestoneCrossings(
       stored.milestoneStateVersion === MILESTONE_STATE_VERSION
         ? stored.milestoneState
@@ -132,9 +124,8 @@ async function checkMilestones(totalCny) {
       milestoneState: result.state,
       milestoneStateVersion: MILESTONE_STATE_VERSION
     });
-    result.crossings.forEach(threshold => {
-      if (alerts[String(threshold)] !== false) createNotification(threshold, totalCny);
-    });
+    result.crossings.forEach(threshold => createNotification(threshold, totalCny));
+    return result.crossings;
   } finally {
     milestoneCheckInProgress = false;
   }
@@ -198,7 +189,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
       return false;
     }
 
-    checkMilestones(totalCny).then(() => sendResponse({ ok: true })).catch(() => {
+    checkMilestones(totalCny).then(crossings => sendResponse({ ok: true, crossings })).catch(() => {
       sendResponse({ ok: false });
     });
     return true;
