@@ -166,6 +166,13 @@ h2 {
   border-bottom: 0;
 }
 
+.portfolio-note {
+  margin: 2px 1px 0;
+  color: var(--muted);
+  font-size: 8px;
+  line-height: 10px;
+}
+
 .symbol {
   font-weight: 650;
   font-variant-numeric: tabular-nums;
