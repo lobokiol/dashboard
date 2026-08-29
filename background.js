@@ -28,12 +28,7 @@ const DEFAULT_HOLDINGS = {
   GOOGL: 0,
   NVDA: 0
 };
-const notificationIcon = `data:image/svg+xml,${encodeURIComponent(`
-  <svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">
-    <rect width="128" height="128" rx="28" fill="#171a21"/>
-    <path d="M29 71 51 93 99 35" fill="none" stroke="#56e0a4" stroke-linecap="round" stroke-linejoin="round" stroke-width="14"/>
-  </svg>
-`)}`;
+const notificationIcon = 'notification.svg';
 
 let milestoneCheckInProgress = false;
 let milestoneRefreshInProgress = false;
