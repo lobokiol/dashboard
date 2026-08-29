@@ -131,14 +131,9 @@ h2 {
 .asset-list,
 .settings-section {
   overflow: hidden;
-  border: 1px solid var(--line);
-  border-radius: 6px;
-  background: var(--surface);
-}
-
-.asset-list {
   border: 0;
   border-radius: 0;
+  background: var(--surface);
 }
 
 .asset-header,
