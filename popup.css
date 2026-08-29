@@ -136,6 +136,11 @@ h2 {
   background: var(--surface);
 }
 
+.asset-list {
+  border: 0;
+  border-radius: 0;
+}
+
 .asset-header,
 .asset-row {
   display: grid;
