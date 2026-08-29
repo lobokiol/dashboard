@@ -258,6 +258,7 @@ h2 {
   width: 72px;
   min-width: 0;
   height: 14px;
+  appearance: textfield;
   border: 1px solid var(--line);
   border-radius: 4px;
   padding: 0 4px;
@@ -265,6 +266,12 @@ h2 {
   color: var(--text);
   font-variant-numeric: tabular-nums;
   text-align: right;
+}
+
+.quantity-input::-webkit-inner-spin-button,
+.quantity-input::-webkit-outer-spin-button {
+  margin: 0;
+  -webkit-appearance: none;
 }
 
 .quantity-input:hover {
