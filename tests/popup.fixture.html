@@ -45,7 +45,6 @@
           <button id="addAssetButton" class="plain-button" type="button">添加</button>
         </div>
         <div id="assetMessage" class="asset-message" role="status"></div>
-        <div id="customAssetRows" class="custom-asset-list"></div>
       </section>
       <section class="settings-section">
         <h2>行情设置</h2>
@@ -85,7 +84,7 @@
           get(defaults, callback) { callback(defaults); },
           set(value) {
             window.__savedHoldings = value.holdings;
-            window.__savedCustomAssets = value.customAssets;
+            window.__savedAssetDefinitions = value.assetDefinitions;
             window.__savedPriceCurrency = value.priceCurrency;
             window.__savedTotalCurrency = value.totalCurrency;
           }

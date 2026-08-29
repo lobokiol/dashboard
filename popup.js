@@ -44,7 +44,6 @@ const assetTypeSelect = document.getElementById('assetTypeSelect');
 const assetSymbolInput = document.getElementById('assetSymbolInput');
 const addAssetButton = document.getElementById('addAssetButton');
 const assetMessage = document.getElementById('assetMessage');
-const customAssetRows = document.getElementById('customAssetRows');
 const priceCurrencySelect = document.getElementById('priceCurrencySelect');
 const totalCurrencySelect = document.getElementById('totalCurrencySelect');
 const exchangeRate = document.getElementById('exchangeRate');
@@ -56,28 +55,24 @@ const refreshButton = document.getElementById('refreshButton');
 const settingsButton = document.getElementById('settingsButton');
 const backButton = document.getElementById('backButton');
 
-function setAssetDefinitions(customAssets = []) {
-  const seen = new Set(defaultAssetDefinitions.map(asset => asset.symbol));
-  const normalizedCustomAssets = [];
+function setAssetDefinitions(definitions = defaultAssetDefinitions) {
+  const seen = new Set();
+  const normalizedDefinitions = [];
 
-  if (Array.isArray(customAssets)) {
-    customAssets.forEach(asset => {
+  if (Array.isArray(definitions)) {
+    definitions.forEach(asset => {
       const symbol = String(asset?.symbol || '').trim().toUpperCase();
       const type = asset?.type === 'stock' ? 'stock' : 'crypto';
       if (!customSymbolPattern.test(symbol) || seen.has(symbol)) return;
       seen.add(symbol);
-      normalizedCustomAssets.push({ symbol, type });
+      normalizedDefinitions.push({ symbol, type });
     });
   }
 
-  assetDefinitions = [...defaultAssetDefinitions, ...normalizedCustomAssets];
+  assetDefinitions = normalizedDefinitions;
   cryptos = assetDefinitions.filter(asset => asset.type === 'crypto').map(asset => asset.symbol);
   stocks = assetDefinitions.filter(asset => asset.type === 'stock').map(asset => asset.symbol);
   assets = assetDefinitions.map(asset => asset.symbol);
-}
-
-function getCustomAssetDefinitions() {
-  return assetDefinitions.filter(asset => !defaultAssetDefinitions.some(defaultAsset => defaultAsset.symbol === asset.symbol));
 }
 
 function formatCurrency(value, currency, locale) {
@@ -109,11 +104,12 @@ function createAssetRows() {
       <span class="price" data-price="${symbol}">加载中</span>
     `;
 
-    const holdingRow = document.createElement('label');
+    const holdingRow = document.createElement('div');
     holdingRow.className = 'holding-row';
     holdingRow.innerHTML = `
       <strong>${symbol}</strong>
       <input class="quantity-input" data-quantity="${symbol}" type="number" min="0" step="any" inputmode="decimal" aria-label="${symbol} 持有数量">
+      <button class="plain-button remove-asset-button" type="button" data-remove-asset="${symbol}" aria-label="删除 ${symbol}">×</button>
     `;
 
     assetFragment.appendChild(row);
@@ -133,26 +129,10 @@ function createAssetRows() {
     });
   });
 
-  renderCustomAssets();
   updateSourceDetails();
-}
 
-function renderCustomAssets() {
-  customAssetRows.replaceChildren();
-
-  getCustomAssetDefinitions().forEach(asset => {
-    const row = document.createElement('div');
-    row.className = 'custom-asset-row';
-    row.innerHTML = `
-      <strong>${asset.symbol}</strong>
-      <span>${asset.type === 'crypto' ? '数字货币 · OKX' : '美股 · Yahoo Finance'}</span>
-      <button class="plain-button remove-asset-button" type="button" data-remove-asset="${asset.symbol}">移除</button>
-    `;
-    customAssetRows.appendChild(row);
-  });
-
-  customAssetRows.querySelectorAll('[data-remove-asset]').forEach(button => {
-    button.addEventListener('click', () => removeCustomAsset(button.dataset.removeAsset));
+  holdingRows.querySelectorAll('[data-remove-asset]').forEach(button => {
+    button.addEventListener('click', () => removeAsset(button.dataset.removeAsset));
   });
 }
 
@@ -179,7 +159,7 @@ function addCustomAsset() {
     return;
   }
 
-  setAssetDefinitions([...getCustomAssetDefinitions(), { symbol, type }]);
+  setAssetDefinitions([...assetDefinitions, { symbol, type }]);
   holdings[symbol] = 0;
   assetSymbolInput.value = '';
   createAssetRows();
@@ -189,12 +169,11 @@ function addCustomAsset() {
   refreshPrices();
 }
 
-function removeCustomAsset(symbol) {
-  const customAsset = getCustomAssetDefinitions().find(asset => asset.symbol === symbol);
-  if (!customAsset) return;
+function removeAsset(symbol) {
+  const asset = assetDefinitions.find(item => item.symbol === symbol);
+  if (!asset) return;
 
-  const remainingCustomAssets = getCustomAssetDefinitions().filter(asset => asset.symbol !== symbol);
-  setAssetDefinitions(remainingCustomAssets);
+  setAssetDefinitions(assetDefinitions.filter(item => item.symbol !== symbol));
   delete holdings[symbol];
   delete prices[symbol];
   createAssetRows();
@@ -236,7 +215,7 @@ function updateValuations() {
 function scheduleSave() {
   clearTimeout(saveTimer);
   saveTimer = setTimeout(() => {
-    chrome.storage.local.set({ holdings, customAssets: getCustomAssetDefinitions(), priceCurrency, totalCurrency });
+    chrome.storage.local.set({ holdings, assetDefinitions, priceCurrency, totalCurrency });
     statusText.textContent = '设置已保存';
   }, 250);
 }
@@ -245,19 +224,26 @@ function loadHoldings() {
   return new Promise(resolve => {
     chrome.storage.local.get({
       holdings: defaultHoldings,
+      assetDefinitions: null,
       customAssets: [],
       priceCurrency: 'USD',
       totalCurrency: 'CNY'
     }, result => {
-      setAssetDefinitions(result.customAssets);
-      holdings = { ...defaultHoldings, ...result.holdings };
+      const savedDefinitions = Array.isArray(result.assetDefinitions)
+        ? result.assetDefinitions
+        : [...defaultAssetDefinitions, ...(Array.isArray(result.customAssets) ? result.customAssets : [])];
+      setAssetDefinitions(savedDefinitions);
+      const savedHoldings = result.holdings && typeof result.holdings === 'object' ? result.holdings : {};
+      holdings = assets.reduce((resultHoldings, symbol) => {
+        resultHoldings[symbol] = PortfolioCore.normalizeQuantity(
+          savedHoldings[symbol] ?? defaultHoldings[symbol] ?? 0
+        );
+        return resultHoldings;
+      }, {});
       priceCurrency = result.priceCurrency === 'CNY' ? 'CNY' : 'USD';
       totalCurrency = result.totalCurrency === 'USD' ? 'USD' : 'CNY';
       priceCurrencySelect.value = priceCurrency;
       totalCurrencySelect.value = totalCurrency;
-      assets.forEach(symbol => {
-        holdings[symbol] = PortfolioCore.normalizeQuantity(holdings[symbol]);
-      });
       resolve();
     });
   });
