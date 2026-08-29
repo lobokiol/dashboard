@@ -39,6 +39,20 @@
       </section>
 
       <section class="settings-section">
+        <h2>添加标的物</h2>
+        <div class="asset-form">
+          <select id="assetTypeSelect" aria-label="标的物类型">
+            <option value="crypto">数字货币 · OKX</option>
+            <option value="stock">美股 · Yahoo</option>
+          </select>
+          <input id="assetSymbolInput" type="text" maxlength="12" autocomplete="off" placeholder="代码，如 TRX / TSLA" aria-label="标的物代码">
+          <button id="addAssetButton" class="plain-button" type="button">添加</button>
+        </div>
+        <div id="assetMessage" class="asset-message" role="status"></div>
+        <div id="customAssetRows" class="custom-asset-list"></div>
+      </section>
+
+      <section class="settings-section">
         <h2>行情设置</h2>
         <div class="setting-row">
           <label for="priceCurrencySelect">标的物价格币种</label>
@@ -63,11 +77,11 @@
       <section class="settings-section source-section">
         <h2>价格来源</h2>
         <div class="source-row">
-          <div><strong>加密货币</strong><span>BTC、ADA、OKB、PAXG、BNB</span></div>
+          <div><strong>加密货币</strong><span id="cryptoSourceSymbols">BTC、ADA、OKB、PAXG、BNB</span></div>
           <span>OKX · SPOT</span>
         </div>
         <div class="source-row">
-          <div><strong>美股</strong><span>AAPL、GOOGL、NVDA</span></div>
+          <div><strong>美股</strong><span id="stockSourceSymbols">AAPL、GOOGL、NVDA</span></div>
           <span>Yahoo Finance</span>
         </div>
         <div class="source-row">

@@ -265,6 +265,73 @@ h2 {
   outline-offset: 1px;
 }
 
+.asset-form {
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
+  gap: 4px;
+  padding: 5px 6px;
+  border-bottom: 1px solid var(--line);
+}
+
+.asset-form select,
+.asset-form input {
+  width: 100%;
+  min-width: 0;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  padding: 2px 4px;
+  background: var(--surface);
+  color: var(--text);
+}
+
+.asset-form input::placeholder {
+  color: var(--muted);
+}
+
+.asset-form select:focus-visible,
+.asset-form input:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.asset-form .plain-button {
+  padding-right: 6px;
+  padding-left: 6px;
+}
+
+.asset-message {
+  min-height: 0;
+  padding: 3px 6px 0;
+  color: var(--muted);
+  font-size: 8px;
+}
+
+.asset-message.error {
+  color: var(--danger);
+}
+
+.custom-asset-row {
+  display: grid;
+  grid-template-columns: 42px 1fr auto;
+  align-items: center;
+  gap: 4px;
+  min-height: 24px;
+  padding: 3px 6px;
+  border-top: 1px solid var(--line);
+}
+
+.custom-asset-row > span {
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 8px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.remove-asset-button {
+  padding: 1px 4px;
+}
+
 .setting-row strong {
   max-width: 240px;
   overflow: hidden;

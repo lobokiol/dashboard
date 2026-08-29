@@ -1,7 +1,15 @@
-const cryptos = ['BTC', 'ADA', 'OKB', 'PAXG', 'BNB'];
-const stocks = ['AAPL', 'GOOGL', 'NVDA'];
+const defaultAssetDefinitions = [
+  { symbol: 'BTC', type: 'crypto' },
+  { symbol: 'ADA', type: 'crypto' },
+  { symbol: 'OKB', type: 'crypto' },
+  { symbol: 'PAXG', type: 'crypto' },
+  { symbol: 'BNB', type: 'crypto' },
+  { symbol: 'AAPL', type: 'stock' },
+  { symbol: 'GOOGL', type: 'stock' },
+  { symbol: 'NVDA', type: 'stock' }
+];
+const customSymbolPattern = /^[A-Z0-9.^=-]{1,12}$/;
 const exchangeRateSymbol = 'CNY=X';
-const assets = [...cryptos, ...stocks];
 const refreshIntervalMs = 5 * 60 * 1000;
 const defaultUsdCnyRate = 7.2;
 const defaultHoldings = {
@@ -17,6 +25,10 @@ const defaultHoldings = {
 
 let prices = {};
 let holdings = { ...defaultHoldings };
+let assetDefinitions = [...defaultAssetDefinitions];
+let cryptos = defaultAssetDefinitions.filter(asset => asset.type === 'crypto').map(asset => asset.symbol);
+let stocks = defaultAssetDefinitions.filter(asset => asset.type === 'stock').map(asset => asset.symbol);
+let assets = assetDefinitions.map(asset => asset.symbol);
 let priceCurrency = 'USD';
 let totalCurrency = 'CNY';
 let usdCnyRate = defaultUsdCnyRate;
@@ -28,14 +40,45 @@ const holdingRows = document.getElementById('holdingRows');
 const mainView = document.getElementById('mainView');
 const settingsView = document.getElementById('settingsView');
 const totalValue = document.getElementById('totalValue');
+const assetTypeSelect = document.getElementById('assetTypeSelect');
+const assetSymbolInput = document.getElementById('assetSymbolInput');
+const addAssetButton = document.getElementById('addAssetButton');
+const assetMessage = document.getElementById('assetMessage');
+const customAssetRows = document.getElementById('customAssetRows');
 const priceCurrencySelect = document.getElementById('priceCurrencySelect');
 const totalCurrencySelect = document.getElementById('totalCurrencySelect');
 const exchangeRate = document.getElementById('exchangeRate');
+const cryptoSourceSymbols = document.getElementById('cryptoSourceSymbols');
+const stockSourceSymbols = document.getElementById('stockSourceSymbols');
 const statusText = document.getElementById('statusText');
 const updatedAt = document.getElementById('updatedAt');
 const refreshButton = document.getElementById('refreshButton');
 const settingsButton = document.getElementById('settingsButton');
 const backButton = document.getElementById('backButton');
+
+function setAssetDefinitions(customAssets = []) {
+  const seen = new Set(defaultAssetDefinitions.map(asset => asset.symbol));
+  const normalizedCustomAssets = [];
+
+  if (Array.isArray(customAssets)) {
+    customAssets.forEach(asset => {
+      const symbol = String(asset?.symbol || '').trim().toUpperCase();
+      const type = asset?.type === 'stock' ? 'stock' : 'crypto';
+      if (!customSymbolPattern.test(symbol) || seen.has(symbol)) return;
+      seen.add(symbol);
+      normalizedCustomAssets.push({ symbol, type });
+    });
+  }
+
+  assetDefinitions = [...defaultAssetDefinitions, ...normalizedCustomAssets];
+  cryptos = assetDefinitions.filter(asset => asset.type === 'crypto').map(asset => asset.symbol);
+  stocks = assetDefinitions.filter(asset => asset.type === 'stock').map(asset => asset.symbol);
+  assets = assetDefinitions.map(asset => asset.symbol);
+}
+
+function getCustomAssetDefinitions() {
+  return assetDefinitions.filter(asset => !defaultAssetDefinitions.some(defaultAsset => defaultAsset.symbol === asset.symbol));
+}
 
 function formatCurrency(value, currency, locale) {
   if (value === null || !Number.isFinite(value)) return '—';
@@ -53,6 +96,9 @@ const formatCny = value => formatCurrency(value, 'CNY', 'zh-CN');
 function createAssetRows() {
   const assetFragment = document.createDocumentFragment();
   const holdingFragment = document.createDocumentFragment();
+
+  rows.replaceChildren();
+  holdingRows.replaceChildren();
 
   assets.forEach(symbol => {
     const row = document.createElement('article');
@@ -86,6 +132,75 @@ function createAssetRows() {
       scheduleSave();
     });
   });
+
+  renderCustomAssets();
+  updateSourceDetails();
+}
+
+function renderCustomAssets() {
+  customAssetRows.replaceChildren();
+
+  getCustomAssetDefinitions().forEach(asset => {
+    const row = document.createElement('div');
+    row.className = 'custom-asset-row';
+    row.innerHTML = `
+      <strong>${asset.symbol}</strong>
+      <span>${asset.type === 'crypto' ? '数字货币 · OKX' : '美股 · Yahoo Finance'}</span>
+      <button class="plain-button remove-asset-button" type="button" data-remove-asset="${asset.symbol}">移除</button>
+    `;
+    customAssetRows.appendChild(row);
+  });
+
+  customAssetRows.querySelectorAll('[data-remove-asset]').forEach(button => {
+    button.addEventListener('click', () => removeCustomAsset(button.dataset.removeAsset));
+  });
+}
+
+function updateSourceDetails() {
+  cryptoSourceSymbols.textContent = cryptos.join('、') || '暂无';
+  stockSourceSymbols.textContent = stocks.join('、') || '暂无';
+}
+
+function showAssetMessage(message, isError = false) {
+  assetMessage.textContent = message;
+  assetMessage.classList.toggle('error', isError);
+}
+
+function addCustomAsset() {
+  const symbol = assetSymbolInput.value.trim().toUpperCase();
+  const type = assetTypeSelect.value === 'stock' ? 'stock' : 'crypto';
+
+  if (!customSymbolPattern.test(symbol)) {
+    showAssetMessage('代码需为 1–12 位大写字母、数字或交易符号', true);
+    return;
+  }
+  if (assets.includes(symbol)) {
+    showAssetMessage(`${symbol} 已存在`, true);
+    return;
+  }
+
+  setAssetDefinitions([...getCustomAssetDefinitions(), { symbol, type }]);
+  holdings[symbol] = 0;
+  assetSymbolInput.value = '';
+  createAssetRows();
+  updateValuations();
+  scheduleSave();
+  showAssetMessage(`${symbol} 已添加，将通过${type === 'crypto' ? ' OKX' : ' Yahoo Finance'} 获取价格`);
+  refreshPrices();
+}
+
+function removeCustomAsset(symbol) {
+  const customAsset = getCustomAssetDefinitions().find(asset => asset.symbol === symbol);
+  if (!customAsset) return;
+
+  const remainingCustomAssets = getCustomAssetDefinitions().filter(asset => asset.symbol !== symbol);
+  setAssetDefinitions(remainingCustomAssets);
+  delete holdings[symbol];
+  delete prices[symbol];
+  createAssetRows();
+  updateValuations();
+  scheduleSave();
+  showAssetMessage(`${symbol} 已移除`);
 }
 
 function showSettings(shouldShow) {
@@ -121,14 +236,20 @@ function updateValuations() {
 function scheduleSave() {
   clearTimeout(saveTimer);
   saveTimer = setTimeout(() => {
-    chrome.storage.local.set({ holdings, priceCurrency, totalCurrency });
+    chrome.storage.local.set({ holdings, customAssets: getCustomAssetDefinitions(), priceCurrency, totalCurrency });
     statusText.textContent = '设置已保存';
   }, 250);
 }
 
 function loadHoldings() {
   return new Promise(resolve => {
-    chrome.storage.local.get({ holdings: defaultHoldings, priceCurrency: 'USD', totalCurrency: 'CNY' }, result => {
+    chrome.storage.local.get({
+      holdings: defaultHoldings,
+      customAssets: [],
+      priceCurrency: 'USD',
+      totalCurrency: 'CNY'
+    }, result => {
+      setAssetDefinitions(result.customAssets);
       holdings = { ...defaultHoldings, ...result.holdings };
       priceCurrency = result.priceCurrency === 'CNY' ? 'CNY' : 'USD';
       totalCurrency = result.totalCurrency === 'USD' ? 'USD' : 'CNY';
@@ -226,6 +347,10 @@ async function initialize() {
 refreshButton.addEventListener('click', refreshPrices);
 settingsButton.addEventListener('click', () => showSettings(true));
 backButton.addEventListener('click', () => showSettings(false));
+addAssetButton.addEventListener('click', addCustomAsset);
+assetSymbolInput.addEventListener('keydown', event => {
+  if (event.key === 'Enter') addCustomAsset();
+});
 priceCurrencySelect.addEventListener('change', event => {
   priceCurrency = event.target.value === 'CNY' ? 'CNY' : 'USD';
   updateValuations();

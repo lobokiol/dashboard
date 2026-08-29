@@ -35,6 +35,19 @@
         <div id="holdingRows" class="holding-list"></div>
       </section>
       <section class="settings-section">
+        <h2>添加标的物</h2>
+        <div class="asset-form">
+          <select id="assetTypeSelect" aria-label="标的物类型">
+            <option value="crypto">数字货币 · OKX</option>
+            <option value="stock">美股 · Yahoo</option>
+          </select>
+          <input id="assetSymbolInput" type="text" maxlength="12" autocomplete="off" placeholder="代码，如 TRX / TSLA" aria-label="标的物代码">
+          <button id="addAssetButton" class="plain-button" type="button">添加</button>
+        </div>
+        <div id="assetMessage" class="asset-message" role="status"></div>
+        <div id="customAssetRows" class="custom-asset-list"></div>
+      </section>
+      <section class="settings-section">
         <h2>行情设置</h2>
         <div class="setting-row">
           <label for="priceCurrencySelect">标的物价格币种</label>
@@ -57,8 +70,8 @@
       </section>
       <section class="settings-section source-section">
         <h2>价格来源</h2>
-        <div class="source-row"><div><strong>加密货币</strong><span>BTC、ADA、OKB、PAXG、BNB</span></div><span>OKX · SPOT</span></div>
-        <div class="source-row"><div><strong>美股</strong><span>AAPL、GOOGL、NVDA</span></div><span>Yahoo Finance</span></div>
+        <div class="source-row"><div><strong>加密货币</strong><span id="cryptoSourceSymbols">BTC、ADA、OKB、PAXG、BNB</span></div><span>OKX · SPOT</span></div>
+        <div class="source-row"><div><strong>美股</strong><span id="stockSourceSymbols">AAPL、GOOGL、NVDA</span></div><span>Yahoo Finance</span></div>
         <div class="source-row"><div><strong>人民币汇率</strong><span>USD/CNY</span></div><span>Yahoo Finance · CNY=X</span></div>
       </section>
     </section>
@@ -72,6 +85,7 @@
           get(defaults, callback) { callback(defaults); },
           set(value) {
             window.__savedHoldings = value.holdings;
+            window.__savedCustomAssets = value.customAssets;
             window.__savedPriceCurrency = value.priceCurrency;
             window.__savedTotalCurrency = value.totalCurrency;
           }
@@ -81,7 +95,9 @@
         lastError: null,
         sendMessage(message, callback) {
           window.__lastMessage = message;
-          callback({ prices: { AAPL: 250, GOOGL: 200, NVDA: 180, 'CNY=X': 7.2 }, errors: [] });
+          const prices = { AAPL: 250, GOOGL: 200, NVDA: 180, 'CNY=X': 7.2 };
+          if (message.symbols?.includes('TSLA')) prices.TSLA = 300;
+          callback({ prices, errors: [] });
         }
       }
     };
@@ -95,7 +111,8 @@
               { instId: 'ADA-USDT', last: '0.75' },
               { instId: 'OKB-USDT', last: '50' },
               { instId: 'PAXG-USDT', last: '2500' },
-              { instId: 'BNB-USDT', last: '600' }
+              { instId: 'BNB-USDT', last: '600' },
+              { instId: 'TRX-USDT', last: '0.35' }
             ]
           };
         }
