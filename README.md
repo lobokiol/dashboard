@@ -1,3 +1,10 @@
+图示：
+
+<img width="227" height="311" alt="image" src="https://github.com/user-attachments/assets/cc4a4b8c-a40b-443f-aca7-142d40eaa4b3" />
+
+<img width="547" height="744" alt="image" src="https://github.com/user-attachments/assets/fc4781f9-e93e-4ba9-bf8c-79207994cc6e" />
+
+
 # Price Dashboard
 
 实时加密货币和股票价格监控浏览器扩展
