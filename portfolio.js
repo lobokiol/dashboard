@@ -55,6 +55,23 @@
     return { definitions: nextDefinitions, changed };
   }
 
+  function moveAssetDefinition(definitions, symbol, targetIndex) {
+    if (!Array.isArray(definitions)) return { definitions: [], changed: false };
+    const sourceIndex = definitions.findIndex(asset => asset?.symbol === symbol);
+    const numericTarget = Number(targetIndex);
+    if (sourceIndex < 0 || !Number.isInteger(numericTarget)) {
+      return { definitions, changed: false };
+    }
+
+    const boundedTarget = Math.max(0, Math.min(definitions.length - 1, numericTarget));
+    if (sourceIndex === boundedTarget) return { definitions, changed: false };
+
+    const nextDefinitions = [...definitions];
+    const [movedAsset] = nextDefinitions.splice(sourceIndex, 1);
+    nextDefinitions.splice(boundedTarget, 0, movedAsset);
+    return { definitions: nextDefinitions, changed: true };
+  }
+
   function getMilestoneCrossings(previousState, totalCny, thresholds) {
     const state = previousState && typeof previousState === 'object' ? previousState : {};
     const numericTotal = Number(totalCny);
@@ -81,6 +98,7 @@
     convertUsdToCny,
     resolveUsdCnyRate,
     applyResolvedAssetTypes,
+    moveAssetDefinition,
     getMilestoneCrossings
   };
 });

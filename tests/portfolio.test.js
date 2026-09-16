@@ -50,6 +50,19 @@ test('persists resolved types only for automatically detected assets', () => {
   ]);
 });
 
+test('moves an asset to a new display position without changing its data', () => {
+  const definitions = [
+    { symbol: 'BTC', type: 'crypto' },
+    { symbol: 'BGB', type: 'crypto' },
+    { symbol: 'AAPL', type: 'stock' }
+  ];
+  const result = PortfolioCore.moveAssetDefinition(definitions, 'AAPL', 0);
+
+  assert.equal(result.changed, true);
+  assert.deepEqual(result.definitions.map(asset => asset.symbol), ['AAPL', 'BTC', 'BGB']);
+  assert.deepEqual(definitions.map(asset => asset.symbol), ['BTC', 'BGB', 'AAPL']);
+});
+
 test('detects total milestone crossings without repeating above a threshold', () => {
   const thresholds = [500000, 1000000];
   const firstReading = PortfolioCore.getMilestoneCrossings({}, 600000, thresholds);
