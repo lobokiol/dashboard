@@ -87,16 +87,16 @@ const formatUsd = value => formatCurrency(value, 'USD', 'en-US');
 const formatCny = value => formatCurrency(value, 'CNY', 'zh-CN');
 
 function clearDragOverStyles() {
-  holdingRows.querySelectorAll('.drag-over').forEach(row => row.classList.remove('drag-over'));
+  rows.querySelectorAll('.drag-over').forEach(row => row.classList.remove('drag-over'));
 }
 
 function clearDragStyles() {
   clearDragOverStyles();
-  holdingRows.querySelectorAll('.dragging').forEach(row => row.classList.remove('dragging'));
+  rows.querySelectorAll('.dragging').forEach(row => row.classList.remove('dragging'));
 }
 
 function focusDragHandle(symbol) {
-  const handle = [...holdingRows.querySelectorAll('[data-drag-asset]')]
+  const handle = [...rows.querySelectorAll('[data-drag-asset]')]
     .find(element => element.dataset.dragAsset === symbol);
   handle?.focus();
 }
@@ -113,9 +113,9 @@ function moveAssetToIndex(symbol, targetIndex, shouldFocus = false) {
 }
 
 function bindAssetReorder() {
-  holdingRows.querySelectorAll('.holding-row').forEach(holdingRow => {
-    const symbol = holdingRow.dataset.assetSymbol;
-    const handle = holdingRow.querySelector('[data-drag-asset]');
+  rows.querySelectorAll('.asset-row').forEach(assetRow => {
+    const symbol = assetRow.dataset.assetSymbol;
+    const handle = assetRow.querySelector('[data-drag-asset]');
 
     handle.addEventListener('dragstart', event => {
       draggedSymbol = symbol;
@@ -123,7 +123,7 @@ function bindAssetReorder() {
         event.dataTransfer.effectAllowed = 'move';
         event.dataTransfer.setData('text/plain', symbol);
       }
-      holdingRow.classList.add('dragging');
+      assetRow.classList.add('dragging');
     });
 
     handle.addEventListener('dragend', () => {
@@ -139,19 +139,19 @@ function bindAssetReorder() {
       moveAssetToIndex(symbol, currentIndex + offset, true);
     });
 
-    holdingRow.addEventListener('dragover', event => {
+    assetRow.addEventListener('dragover', event => {
       if (!draggedSymbol || draggedSymbol === symbol) return;
       event.preventDefault();
       clearDragOverStyles();
-      holdingRow.classList.add('drag-over');
+      assetRow.classList.add('drag-over');
       if (event.dataTransfer) event.dataTransfer.dropEffect = 'move';
     });
 
-    holdingRow.addEventListener('dragleave', () => {
-      holdingRow.classList.remove('drag-over');
+    assetRow.addEventListener('dragleave', () => {
+      assetRow.classList.remove('drag-over');
     });
 
-    holdingRow.addEventListener('drop', event => {
+    assetRow.addEventListener('drop', event => {
       event.preventDefault();
       const sourceSymbol = draggedSymbol || event.dataTransfer?.getData('text/plain');
       const targetIndex = assetDefinitions.findIndex(asset => asset.symbol === symbol);
@@ -172,9 +172,10 @@ function createAssetRows() {
   assets.forEach(symbol => {
     const row = document.createElement('article');
     row.className = 'asset-row';
+    row.dataset.assetSymbol = symbol;
 
     row.innerHTML = `
-      <strong class="symbol">${symbol}</strong>
+      <strong class="symbol drag-handle" draggable="true" tabindex="0" role="button" data-drag-asset="${symbol}" aria-label="拖动 ${symbol} 排序，或按 Alt 加方向键调整" title="拖动排序">${symbol}</strong>
       <span class="price" data-price="${symbol}">加载中</span>
     `;
 
@@ -182,7 +183,7 @@ function createAssetRows() {
     holdingRow.className = 'holding-row';
     holdingRow.dataset.assetSymbol = symbol;
     holdingRow.innerHTML = `
-      <strong class="drag-handle" draggable="true" tabindex="0" role="button" data-drag-asset="${symbol}" aria-label="拖动 ${symbol} 排序，或按 Alt 加方向键调整" title="拖动排序">${symbol}</strong>
+      <strong>${symbol}</strong>
       <input class="quantity-input" data-quantity="${symbol}" type="number" min="0" step="any" inputmode="decimal" aria-label="${symbol} 持有数量">
       <button class="plain-button remove-asset-button" type="button" data-remove-asset="${symbol}" aria-label="删除 ${symbol}">×</button>
     `;

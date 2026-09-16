@@ -276,11 +276,11 @@ h2 {
   outline-offset: 1px;
 }
 
-.holding-row.dragging {
+.asset-row.dragging {
   opacity: 0.45;
 }
 
-.holding-row.drag-over {
+.asset-row.drag-over {
   background: #f1f3f5;
 }
 
