@@ -11,6 +11,7 @@ const DEFAULT_ASSET_DEFINITIONS = [
   { symbol: 'OKB', type: 'crypto' },
   { symbol: 'PAXG', type: 'crypto' },
   { symbol: 'BNB', type: 'crypto' },
+  { symbol: 'BGB', type: 'crypto' },
   { symbol: 'AAPL', type: 'stock' },
   { symbol: 'GOOGL', type: 'stock' },
   { symbol: 'NVDA', type: 'stock' }
@@ -21,6 +22,7 @@ const DEFAULT_HOLDINGS = {
   OKB: 100,
   PAXG: 0,
   BNB: 0,
+  BGB: 0,
   AAPL: 0,
   GOOGL: 0,
   NVDA: 0
@@ -30,10 +32,11 @@ const notificationIcon = 'notification.svg';
 let milestoneCheckInProgress = false;
 let milestoneRefreshInProgress = false;
 
-async function fetchStockPrice(symbol) {
+async function fetchYahooPrice(symbol, type = 'stock') {
   if (!STOCK_SYMBOL_PATTERN.test(symbol)) throw new Error(`Invalid symbol: ${symbol}`);
 
-  const response = await fetch(`https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}`);
+  const yahooSymbol = type === 'crypto' ? `${symbol}-USD` : symbol;
+  const response = await fetch(`https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(yahooSymbol)}`);
   if (!response.ok) throw new Error(`Yahoo HTTP ${response.status}`);
 
   const data = await response.json();
@@ -43,6 +46,8 @@ async function fetchStockPrice(symbol) {
 }
 
 async function fetchCryptoPrices(symbols) {
+  if (!symbols.length) return {};
+
   const response = await fetch('https://www.okx.com/api/v5/market/tickers?instType=SPOT');
   if (!response.ok) throw new Error(`OKX HTTP ${response.status}`);
 
@@ -57,12 +62,31 @@ async function fetchCryptoPrices(symbols) {
   }, {});
 }
 
-async function fetchStockPrices(symbols) {
-  const results = await Promise.allSettled(symbols.map(fetchStockPrice));
+async function fetchYahooPrices(assets) {
+  const requests = [
+    ...assets,
+    { symbol: EXCHANGE_RATE_SYMBOL, type: 'stock' }
+  ];
+  const results = await Promise.allSettled(
+    requests.map(asset => fetchYahooPrice(asset.symbol, asset.type))
+  );
+
   return results.reduce((prices, result, index) => {
-    if (result.status === 'fulfilled') prices[symbols[index]] = result.value;
+    if (result.status === 'fulfilled') prices[requests[index].symbol] = result.value;
     return prices;
   }, {});
+}
+
+async function fetchAllMarketPrices(assets) {
+  const yahooPrices = await fetchYahooPrices(assets);
+  const missingCryptoSymbols = assets
+    .filter(asset => asset.type === 'crypto' && !Number.isFinite(yahooPrices[asset.symbol]))
+    .map(asset => asset.symbol);
+  const okxPrices = await fetchCryptoPrices(missingCryptoSymbols).catch(() => ({}));
+
+  return {
+    prices: { ...yahooPrices, ...okxPrices }
+  };
 }
 
 function normalizeAssetDefinitions(definitions) {
@@ -140,8 +164,6 @@ async function refreshPortfolioForAlerts() {
     ? stored.assetDefinitions
     : DEFAULT_ASSET_DEFINITIONS;
   const assets = normalizeAssetDefinitions(definitions);
-  const cryptos = assets.filter(asset => asset.type === 'crypto').map(asset => asset.symbol);
-  const stocks = assets.filter(asset => asset.type === 'stock').map(asset => asset.symbol);
   const holdings = assets.reduce((result, asset) => {
     result[asset.symbol] = PortfolioCore.normalizeQuantity(
       stored.holdings?.[asset.symbol] ?? DEFAULT_HOLDINGS[asset.symbol] ?? 0
@@ -149,16 +171,11 @@ async function refreshPortfolioForAlerts() {
     return result;
   }, {});
 
-  const [cryptoResult, stockResult] = await Promise.allSettled([
-    fetchCryptoPrices(cryptos),
-    fetchStockPrices([...stocks, EXCHANGE_RATE_SYMBOL])
-  ]);
-  const cryptoPrices = cryptoResult.status === 'fulfilled' ? cryptoResult.value : {};
-  const stockPrices = stockResult.status === 'fulfilled' ? stockResult.value : {};
-  const rate = Number(stockPrices[EXCHANGE_RATE_SYMBOL]);
+  const marketResult = await fetchAllMarketPrices(assets);
+  const rate = Number(marketResult.prices[EXCHANGE_RATE_SYMBOL]);
   if (!Number.isFinite(rate) || rate <= 0) return;
 
-  const totalUsd = PortfolioCore.calculateTotal({ ...cryptoPrices, ...stockPrices }, holdings);
+  const totalUsd = PortfolioCore.calculateTotal(marketResult.prices, holdings);
   const totalCny = PortfolioCore.convertUsdToCny(totalUsd, rate);
   if (Number.isFinite(totalCny)) await checkMilestones(totalCny);
 }
@@ -195,24 +212,12 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
     return true;
   }
 
-  if (message.type !== 'GET_STOCKS') return false;
+  if (message.type !== 'GET_MARKET_PRICES') return false;
 
-  const symbols = Array.isArray(message.symbols) ? message.symbols : [];
-
-  Promise.allSettled(symbols.map(fetchStockPrice)).then(results => {
-    const prices = {};
-    const errors = [];
-
-    results.forEach((result, index) => {
-      if (result.status === 'fulfilled') {
-        prices[symbols[index]] = result.value;
-      } else {
-        errors.push(symbols[index]);
-      }
-    });
-
-    sendResponse({ prices, errors });
-  });
+  const assets = normalizeAssetDefinitions(message.assets);
+  fetchAllMarketPrices(assets)
+    .then(result => sendResponse({ ok: true, ...result }))
+    .catch(() => sendResponse({ ok: false, prices: {} }));
 
   return true;
 });

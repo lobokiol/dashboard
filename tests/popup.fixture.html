@@ -96,6 +96,27 @@
             callback({ ok: true, crossings: window.__milestoneResponse });
             return;
           }
+          if (message.type === 'GET_MARKET_PRICES') {
+            window.__marketAssets = message.assets;
+            callback({
+              ok: true,
+              prices: {
+                BGB: 1.9,
+                AAPL: 250,
+                GOOGL: 200,
+                NVDA: 180,
+                'CNY=X': 7.2
+              },
+              sources: {
+                BGB: 'Yahoo Finance',
+                AAPL: 'Yahoo Finance',
+                GOOGL: 'Yahoo Finance',
+                NVDA: 'Yahoo Finance',
+                'CNY=X': 'Yahoo Finance'
+              }
+            });
+            return;
+          }
           const prices = { AAPL: 250, GOOGL: 200, NVDA: 180, 'CNY=X': 7.2 };
           if (message.symbols?.includes('TSLA')) prices.TSLA = 300;
           callback({ prices, errors: [] });

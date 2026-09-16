@@ -4,6 +4,7 @@ const defaultAssetDefinitions = [
   { symbol: 'OKB', type: 'crypto' },
   { symbol: 'PAXG', type: 'crypto' },
   { symbol: 'BNB', type: 'crypto' },
+  { symbol: 'BGB', type: 'crypto' },
   { symbol: 'AAPL', type: 'stock' },
   { symbol: 'GOOGL', type: 'stock' },
   { symbol: 'NVDA', type: 'stock' }
@@ -12,12 +13,14 @@ const customSymbolPattern = /^[A-Z0-9.^=-]{1,12}$/;
 const exchangeRateSymbol = 'CNY=X';
 const refreshIntervalMs = 5 * 60 * 1000;
 const defaultUsdCnyRate = 7.2;
+const assetDefinitionsVersion = 1;
 const defaultHoldings = {
   BTC: 0,
   ADA: 10000,
   OKB: 100,
   PAXG: 0,
   BNB: 0,
+  BGB: 0,
   AAPL: 0,
   GOOGL: 0,
   NVDA: 0
@@ -26,8 +29,6 @@ const defaultHoldings = {
 let prices = {};
 let holdings = { ...defaultHoldings };
 let assetDefinitions = [...defaultAssetDefinitions];
-let cryptos = defaultAssetDefinitions.filter(asset => asset.type === 'crypto').map(asset => asset.symbol);
-let stocks = defaultAssetDefinitions.filter(asset => asset.type === 'stock').map(asset => asset.symbol);
 let assets = assetDefinitions.map(asset => asset.symbol);
 let priceCurrency = 'USD';
 let totalCurrency = 'CNY';
@@ -69,8 +70,6 @@ function setAssetDefinitions(definitions = defaultAssetDefinitions) {
   }
 
   assetDefinitions = normalizedDefinitions;
-  cryptos = assetDefinitions.filter(asset => asset.type === 'crypto').map(asset => asset.symbol);
-  stocks = assetDefinitions.filter(asset => asset.type === 'stock').map(asset => asset.symbol);
   assets = assetDefinitions.map(asset => asset.symbol);
 }
 
@@ -232,13 +231,20 @@ function loadHoldings() {
     chrome.storage.local.get({
       holdings: defaultHoldings,
       assetDefinitions: null,
+      assetDefinitionsVersion: 0,
       customAssets: [],
       priceCurrency: 'USD',
       totalCurrency: 'CNY'
     }, result => {
-      const savedDefinitions = Array.isArray(result.assetDefinitions)
+      let savedDefinitions = Array.isArray(result.assetDefinitions)
         ? result.assetDefinitions
         : [...defaultAssetDefinitions, ...(Array.isArray(result.customAssets) ? result.customAssets : [])];
+      if (result.assetDefinitionsVersion < assetDefinitionsVersion) {
+        if (!savedDefinitions.some(asset => asset?.symbol === 'BGB')) {
+          savedDefinitions = [...savedDefinitions, { symbol: 'BGB', type: 'crypto' }];
+        }
+        chrome.storage.local.set({ assetDefinitions: savedDefinitions, assetDefinitionsVersion });
+      }
       setAssetDefinitions(savedDefinitions);
       const savedHoldings = result.holdings && typeof result.holdings === 'object' ? result.holdings : {};
       holdings = assets.reduce((resultHoldings, symbol) => {
@@ -256,36 +262,18 @@ function loadHoldings() {
   });
 }
 
-async function getCryptoPrices() {
-  const response = await fetch('https://www.okx.com/api/v5/market/tickers?instType=SPOT');
-  if (!response.ok) throw new Error(`OKX HTTP ${response.status}`);
-
-  const payload = await response.json();
-  if (!Array.isArray(payload.data)) throw new Error('OKX 返回格式异常');
-
-  return payload.data.reduce((result, item) => {
-    const symbol = item.instId?.endsWith('-USDT') ? item.instId.slice(0, -5) : '';
-    const price = Number(item.last);
-    if (cryptos.includes(symbol) && Number.isFinite(price)) result[symbol] = price;
-    return result;
-  }, {});
-}
-
-function getStockPrices() {
+function getMarketPrices() {
   return new Promise((resolve, reject) => {
-    chrome.runtime.sendMessage({ type: 'GET_STOCKS', symbols: [...stocks, exchangeRateSymbol] }, result => {
+    chrome.runtime.sendMessage({ type: 'GET_MARKET_PRICES', assets: assetDefinitions }, result => {
       if (chrome.runtime.lastError) {
         reject(new Error(chrome.runtime.lastError.message));
         return;
       }
       if (!result) {
-        reject(new Error('股票行情无响应'));
+        reject(new Error('行情无响应'));
         return;
       }
-      resolve({
-        prices: result.prices || {},
-        errors: result.errors || []
-      });
+      resolve(result);
     });
   });
 }
@@ -293,21 +281,13 @@ function getStockPrices() {
 async function refreshPrices() {
   refreshButton.disabled = true;
 
-  const [cryptoResult, stockResult] = await Promise.allSettled([
-    getCryptoPrices(),
-    getStockPrices()
-  ]);
-
-  const stockPrices = stockResult.status === 'fulfilled' ? stockResult.value.prices : {};
-  const receivedRate = Number(stockPrices[exchangeRateSymbol]);
+  const marketResult = await getMarketPrices().catch(() => ({ prices: {} }));
+  const receivedRate = Number(marketResult.prices?.[exchangeRateSymbol]);
   if (Number.isFinite(receivedRate) && receivedRate > 0) {
     usdCnyRate = receivedRate;
   }
 
-  prices = {
-    ...(cryptoResult.status === 'fulfilled' ? cryptoResult.value : {}),
-    ...stockPrices
-  };
+  prices = marketResult.prices || {};
 
   updateValuations();
   refreshButton.disabled = false;
