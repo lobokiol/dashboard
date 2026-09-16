@@ -60,6 +60,16 @@
           </select>
         </div>
       </section>
+      <section class="settings-section">
+        <h2>快捷键</h2>
+        <div class="setting-row">
+          <span>唤醒看板</span>
+          <div class="shortcut-control">
+            <strong id="shortcutSummary">读取中</strong>
+            <button id="shortcutSettingsButton" class="plain-button" type="button">修改</button>
+          </div>
+        </div>
+      </section>
     </section>
 
     <div id="milestoneDialog" class="milestone-dialog" role="alertdialog" aria-modal="true" aria-labelledby="milestoneDialogTitle" aria-describedby="milestoneDialogMessage" hidden>
@@ -74,6 +84,14 @@
     window.__milestoneResponse = [];
     window.__marketRate = 7.2;
     window.__storageData = {};
+    window.__storageSessionData = new URLSearchParams(location.search).has('shortcut')
+      ? { shortcutPopupCloseAt: Date.now() + 3000 }
+      : {};
+    window.__closeCalledAt = null;
+    window.close = () => {
+      window.__closeCalledAt = Date.now();
+      document.documentElement.dataset.testClosed = 'true';
+    };
     window.chrome = {
       storage: {
         local: {
@@ -86,6 +104,27 @@
             window.__savedTotalCurrency = value.totalCurrency;
             window.__savedUsdCnyRate = value.usdCnyRate;
           }
+        },
+        session: {
+          get(key) {
+            return Promise.resolve({ [key]: window.__storageSessionData[key] });
+          },
+          set(value) {
+            Object.assign(window.__storageSessionData, value);
+            return Promise.resolve();
+          },
+          remove(key) {
+            delete window.__storageSessionData[key];
+            return Promise.resolve();
+          }
+        }
+      },
+      commands: {
+        getAll() {
+          return Promise.resolve([
+            { name: 'open-dashboard', shortcut: 'Alt+G' },
+            { name: 'open-dashboard-global', shortcut: 'Ctrl+Shift+7' }
+          ]);
         }
       },
       runtime: {
@@ -125,6 +164,12 @@
           const prices = { AAPL: 250, GOOGL: 200, NVDA: 180, 'CNY=X': 7.2 };
           if (message.symbols?.includes('TSLA')) prices.TSLA = 300;
           callback({ prices, errors: [] });
+        }
+      },
+      tabs: {
+        create(options) {
+          window.__createdTab = options;
+          return Promise.resolve(options);
         }
       }
     };

@@ -439,3 +439,15 @@ h2 {
   white-space: nowrap;
   text-align: right;
 }
+
+.shortcut-control {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  min-width: 0;
+}
+
+.shortcut-control strong {
+  font-weight: 400;
+  font-variant-numeric: tabular-nums;
+}

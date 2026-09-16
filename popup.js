@@ -14,6 +14,7 @@ const exchangeRateSymbol = 'CNY=X';
 const refreshIntervalMs = 5 * 60 * 1000;
 const defaultUsdCnyRate = 7.2;
 const assetDefinitionsVersion = 1;
+const shortcutPopupCloseKey = 'shortcutPopupCloseAt';
 const defaultHoldings = {
   BTC: 0,
   ADA: 10000,
@@ -49,6 +50,8 @@ const addAssetButton = document.getElementById('addAssetButton');
 const assetMessage = document.getElementById('assetMessage');
 const priceCurrencySelect = document.getElementById('priceCurrencySelect');
 const totalCurrencySelect = document.getElementById('totalCurrencySelect');
+const shortcutSummary = document.getElementById('shortcutSummary');
+const shortcutSettingsButton = document.getElementById('shortcutSettingsButton');
 const milestone500kToggle = document.getElementById('milestone500kToggle');
 const milestone1mToggle = document.getElementById('milestone1mToggle');
 const refreshButton = document.getElementById('refreshButton');
@@ -81,6 +84,24 @@ function formatCurrency(value, currency, locale) {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2
   }).format(value);
+}
+
+async function scheduleShortcutAutoClose() {
+  const stored = await chrome.storage.session.get(shortcutPopupCloseKey);
+  const closeAt = Number(stored[shortcutPopupCloseKey]);
+  await chrome.storage.session.remove(shortcutPopupCloseKey);
+  if (!Number.isFinite(closeAt) || closeAt <= Date.now()) return;
+
+  setTimeout(() => window.close(), closeAt - Date.now());
+}
+
+async function updateShortcutSummary() {
+  const commands = await chrome.commands.getAll();
+  const shortcuts = commands
+    .filter(command => ['open-dashboard', 'open-dashboard-global'].includes(command.name))
+    .map(command => command.shortcut)
+    .filter(Boolean);
+  shortcutSummary.textContent = shortcuts.length ? shortcuts.join(' / ') : '未设置';
 }
 
 const formatUsd = value => formatCurrency(value, 'USD', 'en-US');
@@ -384,6 +405,7 @@ async function refreshPrices() {
 async function initialize() {
   await loadHoldings();
   createAssetRows();
+  await updateShortcutSummary();
   await refreshPrices();
 }
 
@@ -407,5 +429,9 @@ totalCurrencySelect.addEventListener('change', event => {
 milestoneDialogClose.addEventListener('click', () => {
   milestoneDialog.hidden = true;
 });
+shortcutSettingsButton.addEventListener('click', () => {
+  chrome.tabs.create({ url: 'chrome://extensions/shortcuts' });
+});
+scheduleShortcutAutoClose();
 initialize();
 setInterval(refreshPrices, refreshIntervalMs);
