@@ -2,6 +2,7 @@ importScripts('portfolio.js');
 
 const STOCK_SYMBOL_PATTERN = /^[A-Z0-9.^=-]{1,12}$/;
 const EXCHANGE_RATE_SYMBOL = 'CNY=X';
+const DEFAULT_USD_CNY_RATE = 7.2;
 const MILESTONE_ALARM = 'portfolio-milestone-check';
 const MILESTONE_THRESHOLDS = [500000, 1000000];
 const MILESTONE_STATE_VERSION = 3;
@@ -50,7 +51,10 @@ async function fetchYahooPrice(symbol, type = 'stock') {
       const data = await response.json();
       const price = Number(data?.chart?.result?.[0]?.meta?.regularMarketPrice);
       if (!Number.isFinite(price)) throw new Error(`Missing price: ${symbol}`);
-      return price;
+      return {
+        price,
+        resolvedType: yahooSymbol.endsWith('-USD') ? 'crypto' : 'stock'
+      };
     } catch (error) {
       lastError = error;
     }
@@ -85,21 +89,28 @@ async function fetchYahooPrices(assets) {
     requests.map(asset => fetchYahooPrice(asset.symbol, asset.type))
   );
 
-  return results.reduce((prices, result, index) => {
-    if (result.status === 'fulfilled') prices[requests[index].symbol] = result.value;
-    return prices;
-  }, {});
+  return results.reduce((marketData, result, index) => {
+    if (result.status !== 'fulfilled') return marketData;
+    const symbol = requests[index].symbol;
+    marketData.prices[symbol] = result.value.price;
+    marketData.resolvedTypes[symbol] = result.value.resolvedType;
+    return marketData;
+  }, { prices: {}, resolvedTypes: {} });
 }
 
 async function fetchAllMarketPrices(assets) {
-  const yahooPrices = await fetchYahooPrices(assets);
+  const yahooMarketData = await fetchYahooPrices(assets);
   const missingCryptoSymbols = assets
-    .filter(asset => asset.type !== 'stock' && !Number.isFinite(yahooPrices[asset.symbol]))
+    .filter(asset => asset.type !== 'stock' && !Number.isFinite(yahooMarketData.prices[asset.symbol]))
     .map(asset => asset.symbol);
   const okxPrices = await fetchCryptoPrices(missingCryptoSymbols).catch(() => ({}));
+  Object.keys(okxPrices).forEach(symbol => {
+    yahooMarketData.resolvedTypes[symbol] = 'crypto';
+  });
 
   return {
-    prices: { ...yahooPrices, ...okxPrices }
+    prices: { ...yahooMarketData.prices, ...okxPrices },
+    resolvedTypes: yahooMarketData.resolvedTypes
   };
 }
 
@@ -172,7 +183,8 @@ async function checkMilestones(totalCny) {
 async function refreshPortfolioForAlerts() {
   const stored = await chrome.storage.local.get({
     holdings: DEFAULT_HOLDINGS,
-    assetDefinitions: null
+    assetDefinitions: null,
+    usdCnyRate: DEFAULT_USD_CNY_RATE
   });
   const definitions = Array.isArray(stored.assetDefinitions)
     ? stored.assetDefinitions
@@ -186,8 +198,13 @@ async function refreshPortfolioForAlerts() {
   }, {});
 
   const marketResult = await fetchAllMarketPrices(assets);
-  const rate = Number(marketResult.prices[EXCHANGE_RATE_SYMBOL]);
-  if (!Number.isFinite(rate) || rate <= 0) return;
+  const receivedRate = Number(marketResult.prices[EXCHANGE_RATE_SYMBOL]);
+  const rate = PortfolioCore.resolveUsdCnyRate(receivedRate, stored.usdCnyRate, DEFAULT_USD_CNY_RATE);
+  const resolvedAssets = PortfolioCore.applyResolvedAssetTypes(assets, marketResult.resolvedTypes);
+  const storageUpdates = {};
+  if (Number.isFinite(receivedRate) && receivedRate > 0) storageUpdates.usdCnyRate = receivedRate;
+  if (resolvedAssets.changed) storageUpdates.assetDefinitions = resolvedAssets.definitions;
+  if (Object.keys(storageUpdates).length) await chrome.storage.local.set(storageUpdates);
 
   const totalUsd = PortfolioCore.calculateTotal(marketResult.prices, holdings);
   const totalCny = PortfolioCore.convertUsdToCny(totalUsd, rate);

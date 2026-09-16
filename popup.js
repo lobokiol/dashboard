@@ -220,7 +220,7 @@ function updateValuations() {
 function scheduleSave() {
   clearTimeout(saveTimer);
   saveTimer = setTimeout(() => {
-    chrome.storage.local.set({ holdings, assetDefinitions, priceCurrency, totalCurrency });
+    chrome.storage.local.set({ holdings, assetDefinitions, priceCurrency, totalCurrency, usdCnyRate });
   }, 250);
 }
 
@@ -232,7 +232,8 @@ function loadHoldings() {
       assetDefinitionsVersion: 0,
       customAssets: [],
       priceCurrency: 'USD',
-      totalCurrency: 'CNY'
+      totalCurrency: 'CNY',
+      usdCnyRate: defaultUsdCnyRate
     }, result => {
       let savedDefinitions = Array.isArray(result.assetDefinitions)
         ? result.assetDefinitions
@@ -253,6 +254,7 @@ function loadHoldings() {
       }, {});
       priceCurrency = result.priceCurrency === 'CNY' ? 'CNY' : 'USD';
       totalCurrency = result.totalCurrency === 'USD' ? 'USD' : 'CNY';
+      usdCnyRate = PortfolioCore.resolveUsdCnyRate(undefined, result.usdCnyRate, defaultUsdCnyRate);
       priceCurrencySelect.value = priceCurrency;
       totalCurrencySelect.value = totalCurrency;
       resolve();
@@ -281,9 +283,16 @@ async function refreshPrices() {
 
   const marketResult = await getMarketPrices().catch(() => ({ prices: {} }));
   const receivedRate = Number(marketResult.prices?.[exchangeRateSymbol]);
-  if (Number.isFinite(receivedRate) && receivedRate > 0) {
-    usdCnyRate = receivedRate;
+  usdCnyRate = PortfolioCore.resolveUsdCnyRate(receivedRate, usdCnyRate, defaultUsdCnyRate);
+  const storageUpdates = {};
+  if (Number.isFinite(receivedRate) && receivedRate > 0) storageUpdates.usdCnyRate = receivedRate;
+
+  const resolvedAssets = PortfolioCore.applyResolvedAssetTypes(assetDefinitions, marketResult.resolvedTypes);
+  if (resolvedAssets.changed) {
+    setAssetDefinitions(resolvedAssets.definitions);
+    storageUpdates.assetDefinitions = assetDefinitions;
   }
+  if (Object.keys(storageUpdates).length) chrome.storage.local.set(storageUpdates);
 
   prices = marketResult.prices || {};
 

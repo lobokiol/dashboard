@@ -72,15 +72,19 @@
   <script>
     window.__savedHoldings = null;
     window.__milestoneResponse = [];
+    window.__marketRate = 7.2;
+    window.__storageData = {};
     window.chrome = {
       storage: {
         local: {
-          get(defaults, callback) { callback(defaults); },
+          get(defaults, callback) { callback({ ...defaults, ...window.__storageData }); },
           set(value) {
+            Object.assign(window.__storageData, value);
             window.__savedHoldings = value.holdings;
             window.__savedAssetDefinitions = value.assetDefinitions;
             window.__savedPriceCurrency = value.priceCurrency;
             window.__savedTotalCurrency = value.totalCurrency;
+            window.__savedUsdCnyRate = value.usdCnyRate;
           }
         }
       },
@@ -98,24 +102,23 @@
               BGB: 1.9,
               AAPL: 250,
               GOOGL: 200,
-              NVDA: 180,
-              'CNY=X': 7.2
+              NVDA: 180
             };
-            const sources = {
-              BGB: 'Yahoo Finance',
-              AAPL: 'Yahoo Finance',
-              GOOGL: 'Yahoo Finance',
-              NVDA: 'Yahoo Finance',
-              'CNY=X': 'Yahoo Finance'
+            if (Number.isFinite(window.__marketRate)) prices['CNY=X'] = window.__marketRate;
+            const resolvedTypes = {
+              BGB: 'crypto',
+              AAPL: 'stock',
+              GOOGL: 'stock',
+              NVDA: 'stock'
             };
             if (message.assets?.some(asset => asset.symbol === 'TSLA')) {
               prices.TSLA = 300;
-              sources.TSLA = 'Yahoo Finance';
+              resolvedTypes.TSLA = 'stock';
             }
             callback({
               ok: true,
               prices,
-              sources
+              resolvedTypes
             });
             return;
           }

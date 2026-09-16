@@ -33,6 +33,28 @@
     return numericValue * numericRate;
   }
 
+  function resolveUsdCnyRate(receivedRate, savedRate, fallbackRate = 7.2) {
+    const candidates = [receivedRate, savedRate, fallbackRate];
+    const resolvedRate = candidates.find(value => {
+      const numericValue = Number(value);
+      return Number.isFinite(numericValue) && numericValue > 0;
+    });
+    return Number(resolvedRate);
+  }
+
+  function applyResolvedAssetTypes(definitions, resolvedTypes) {
+    if (!Array.isArray(definitions)) return { definitions: [], changed: false };
+    const typeMap = resolvedTypes && typeof resolvedTypes === 'object' ? resolvedTypes : {};
+    let changed = false;
+    const nextDefinitions = definitions.map(asset => {
+      const resolvedType = typeMap[asset?.symbol];
+      if (asset?.type !== 'auto' || !['crypto', 'stock'].includes(resolvedType)) return asset;
+      changed = true;
+      return { ...asset, type: resolvedType };
+    });
+    return { definitions: nextDefinitions, changed };
+  }
+
   function getMilestoneCrossings(previousState, totalCny, thresholds) {
     const state = previousState && typeof previousState === 'object' ? previousState : {};
     const numericTotal = Number(totalCny);
@@ -57,6 +79,8 @@
     calculateValue,
     calculateTotal,
     convertUsdToCny,
+    resolveUsdCnyRate,
+    applyResolvedAssetTypes,
     getMilestoneCrossings
   };
 });
