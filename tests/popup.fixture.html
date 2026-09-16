@@ -38,10 +38,6 @@
       <section class="settings-section">
         <h2>添加标的物</h2>
         <div class="asset-form">
-          <select id="assetTypeSelect" aria-label="标的物类型">
-            <option value="crypto">数字货币</option>
-            <option value="stock">美股</option>
-          </select>
           <input id="assetSymbolInput" type="text" maxlength="12" autocomplete="off" placeholder="代码，如 TRX / TSLA" aria-label="标的物代码">
           <button id="addAssetButton" class="plain-button" type="button">添加</button>
         </div>
@@ -98,22 +94,28 @@
           }
           if (message.type === 'GET_MARKET_PRICES') {
             window.__marketAssets = message.assets;
+            const prices = {
+              BGB: 1.9,
+              AAPL: 250,
+              GOOGL: 200,
+              NVDA: 180,
+              'CNY=X': 7.2
+            };
+            const sources = {
+              BGB: 'Yahoo Finance',
+              AAPL: 'Yahoo Finance',
+              GOOGL: 'Yahoo Finance',
+              NVDA: 'Yahoo Finance',
+              'CNY=X': 'Yahoo Finance'
+            };
+            if (message.assets?.some(asset => asset.symbol === 'TSLA')) {
+              prices.TSLA = 300;
+              sources.TSLA = 'Yahoo Finance';
+            }
             callback({
               ok: true,
-              prices: {
-                BGB: 1.9,
-                AAPL: 250,
-                GOOGL: 200,
-                NVDA: 180,
-                'CNY=X': 7.2
-              },
-              sources: {
-                BGB: 'Yahoo Finance',
-                AAPL: 'Yahoo Finance',
-                GOOGL: 'Yahoo Finance',
-                NVDA: 'Yahoo Finance',
-                'CNY=X': 'Yahoo Finance'
-              }
+              prices,
+              sources
             });
             return;
           }

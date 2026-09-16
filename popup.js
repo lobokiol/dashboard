@@ -43,7 +43,6 @@ const totalValue = document.getElementById('totalValue');
 const milestoneDialog = document.getElementById('milestoneDialog');
 const milestoneDialogMessage = document.getElementById('milestoneDialogMessage');
 const milestoneDialogClose = document.getElementById('milestoneDialogClose');
-const assetTypeSelect = document.getElementById('assetTypeSelect');
 const assetSymbolInput = document.getElementById('assetSymbolInput');
 const addAssetButton = document.getElementById('addAssetButton');
 const assetMessage = document.getElementById('assetMessage');
@@ -62,7 +61,7 @@ function setAssetDefinitions(definitions = defaultAssetDefinitions) {
   if (Array.isArray(definitions)) {
     definitions.forEach(asset => {
       const symbol = String(asset?.symbol || '').trim().toUpperCase();
-      const type = asset?.type === 'stock' ? 'stock' : 'crypto';
+      const type = asset?.type === 'stock' ? 'stock' : asset?.type === 'auto' ? 'auto' : 'crypto';
       if (!customSymbolPattern.test(symbol) || seen.has(symbol)) return;
       seen.add(symbol);
       normalizedDefinitions.push({ symbol, type });
@@ -146,7 +145,6 @@ function showMilestoneDialog(thresholds, totalCny) {
 
 function addCustomAsset() {
   const symbol = assetSymbolInput.value.trim().toUpperCase();
-  const type = assetTypeSelect.value === 'stock' ? 'stock' : 'crypto';
 
   if (!customSymbolPattern.test(symbol)) {
     showAssetMessage('代码需为 1–12 位大写字母、数字或交易符号', true);
@@ -157,7 +155,7 @@ function addCustomAsset() {
     return;
   }
 
-  setAssetDefinitions([...assetDefinitions, { symbol, type }]);
+  setAssetDefinitions([...assetDefinitions, { symbol, type: 'auto' }]);
   holdings[symbol] = 0;
   assetSymbolInput.value = '';
   createAssetRows();

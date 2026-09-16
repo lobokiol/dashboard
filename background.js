@@ -35,14 +35,28 @@ let milestoneRefreshInProgress = false;
 async function fetchYahooPrice(symbol, type = 'stock') {
   if (!STOCK_SYMBOL_PATTERN.test(symbol)) throw new Error(`Invalid symbol: ${symbol}`);
 
-  const yahooSymbol = type === 'crypto' ? `${symbol}-USD` : symbol;
-  const response = await fetch(`https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(yahooSymbol)}`);
-  if (!response.ok) throw new Error(`Yahoo HTTP ${response.status}`);
+  const yahooSymbols = type === 'crypto'
+    ? [`${symbol}-USD`]
+    : type === 'auto'
+      ? [`${symbol}-USD`, symbol]
+      : [symbol];
+  let lastError;
 
-  const data = await response.json();
-  const price = Number(data?.chart?.result?.[0]?.meta?.regularMarketPrice);
-  if (!Number.isFinite(price)) throw new Error(`Missing price: ${symbol}`);
-  return price;
+  for (const yahooSymbol of yahooSymbols) {
+    try {
+      const response = await fetch(`https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(yahooSymbol)}`);
+      if (!response.ok) throw new Error(`Yahoo HTTP ${response.status}`);
+
+      const data = await response.json();
+      const price = Number(data?.chart?.result?.[0]?.meta?.regularMarketPrice);
+      if (!Number.isFinite(price)) throw new Error(`Missing price: ${symbol}`);
+      return price;
+    } catch (error) {
+      lastError = error;
+    }
+  }
+
+  throw lastError || new Error(`Missing price: ${symbol}`);
 }
 
 async function fetchCryptoPrices(symbols) {
@@ -80,7 +94,7 @@ async function fetchYahooPrices(assets) {
 async function fetchAllMarketPrices(assets) {
   const yahooPrices = await fetchYahooPrices(assets);
   const missingCryptoSymbols = assets
-    .filter(asset => asset.type === 'crypto' && !Number.isFinite(yahooPrices[asset.symbol]))
+    .filter(asset => asset.type !== 'stock' && !Number.isFinite(yahooPrices[asset.symbol]))
     .map(asset => asset.symbol);
   const okxPrices = await fetchCryptoPrices(missingCryptoSymbols).catch(() => ({}));
 
@@ -95,7 +109,7 @@ function normalizeAssetDefinitions(definitions) {
 
   definitions.forEach(asset => {
     const symbol = String(asset?.symbol || '').trim().toUpperCase();
-    const type = asset?.type === 'stock' ? 'stock' : 'crypto';
+    const type = asset?.type === 'stock' ? 'stock' : asset?.type === 'auto' ? 'auto' : 'crypto';
     if (!STOCK_SYMBOL_PATTERN.test(symbol) || seen.has(symbol)) return;
     seen.add(symbol);
     normalized.push({ symbol, type });

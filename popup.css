@@ -359,7 +359,7 @@ h2 {
 
 .asset-form {
   display: grid;
-  grid-template-columns: 1fr 1fr auto;
+  grid-template-columns: 1fr auto;
   gap: 2px;
   padding: 1px 5px;
   border-bottom: 1px solid var(--line);
