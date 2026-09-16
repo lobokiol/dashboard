@@ -221,6 +221,11 @@ function scheduleMilestoneAlarm() {
 chrome.runtime.onInstalled.addListener(scheduleMilestoneAlarm);
 chrome.runtime.onStartup.addListener(scheduleMilestoneAlarm);
 
+chrome.commands.onCommand.addListener(command => {
+  if (command !== 'open-dashboard-global') return;
+  chrome.action.openPopup().catch(() => {});
+});
+
 chrome.alarms.onAlarm.addListener(alarm => {
   if (alarm.name !== MILESTONE_ALARM || milestoneRefreshInProgress) return;
   milestoneRefreshInProgress = true;

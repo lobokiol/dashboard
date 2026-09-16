@@ -1,13 +1,29 @@
 {
   "manifest_version": 3,
   "name": "Price Dashboard",
-  "version": "1.13.0",
+  "version": "1.14.0",
+  "minimum_chrome_version": "127",
   "description": "实时加密货币、股票价格与持仓资产估值",
   "action": {
     "default_popup": "popup.html"
   },
   "background": {
     "service_worker": "background.js"
+  },
+  "commands": {
+    "_execute_action": {
+      "suggested_key": {
+        "default": "Alt+G"
+      },
+      "description": "打开资产看板"
+    },
+    "open-dashboard-global": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+7"
+      },
+      "description": "全局打开资产看板",
+      "global": true
+    }
   },
   "permissions": [
     "storage",
