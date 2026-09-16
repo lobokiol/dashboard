@@ -175,7 +175,7 @@ function removeAsset(symbol) {
   createAssetRows();
   updateValuations();
   scheduleSave();
-  showAssetMessage(`${symbol} 已移除`);
+  showAssetMessage('');
 }
 
 function showSettings(shouldShow) {
