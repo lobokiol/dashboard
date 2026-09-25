@@ -55,6 +55,7 @@ const shortcutSettingsButton = document.getElementById('shortcutSettingsButton')
 const milestone500kToggle = document.getElementById('milestone500kToggle');
 const milestone1mToggle = document.getElementById('milestone1mToggle');
 const refreshButton = document.getElementById('refreshButton');
+const mainRefreshButton = document.getElementById('mainRefreshButton');
 const settingsButton = document.getElementById('settingsButton');
 const backButton = document.getElementById('backButton');
 
@@ -382,6 +383,7 @@ function getMarketPrices() {
 
 async function refreshPrices() {
   refreshButton.disabled = true;
+  mainRefreshButton.disabled = true;
 
   const marketResult = await getMarketPrices().catch(() => ({ prices: {} }));
   const receivedRate = Number(marketResult.prices?.[exchangeRateSymbol]);
@@ -400,6 +402,7 @@ async function refreshPrices() {
 
   updateValuations();
   refreshButton.disabled = false;
+  mainRefreshButton.disabled = false;
 }
 
 async function initialize() {
@@ -410,6 +413,7 @@ async function initialize() {
 }
 
 refreshButton.addEventListener('click', refreshPrices);
+mainRefreshButton.addEventListener('click', refreshPrices);
 settingsButton.addEventListener('click', () => showSettings(true));
 backButton.addEventListener('click', () => showSettings(false));
 addAssetButton.addEventListener('click', addCustomAsset);
