@@ -119,7 +119,27 @@ h1 {
 }
 
 #mainRefreshButton {
-  color: #111;
+  color: #000;
+}
+
+.refresh-icon {
+  display: block;
+  width: 10px;
+  height: 10px;
+  overflow: visible;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.45;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.refresh-icon .refresh-arrowhead {
+  stroke-width: 1.05;
+}
+
+#settingsButton {
+  color: #000;
   font-family: "Segoe UI Symbol", "Arial Unicode MS", sans-serif;
 }
 
