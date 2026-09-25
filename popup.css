@@ -89,13 +89,20 @@ h1 {
 
 #mainView .topbar {
   justify-content: flex-start;
-  gap: 4px;
+  flex-wrap: wrap;
+  gap: 2px 4px;
+}
+
+#mainView .portfolio-summary {
+  flex-shrink: 0;
 }
 
 .toolbar-actions {
   display: flex;
   align-items: center;
   gap: 0;
+  flex-shrink: 0;
+  margin-left: auto;
 }
 
 .plain-button.icon-button {
