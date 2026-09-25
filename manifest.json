@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Price Dashboard",
-  "version": "1.16.0",
+  "version": "1.17.0",
   "minimum_chrome_version": "127",
   "description": "实时加密货币、股票价格与持仓资产估值",
   "action": {

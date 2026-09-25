@@ -91,18 +91,13 @@ h1 {
   gap: 2px;
 }
 
-#settingsButton {
-  padding-right: 4px;
-  padding-left: 4px;
-}
-
 .toolbar-actions {
   display: flex;
   align-items: center;
   gap: 2px;
 }
 
-.icon-button {
+.plain-button.icon-button {
   display: inline-flex;
   width: 20px;
   height: 20px;
@@ -111,12 +106,18 @@ h1 {
   padding: 0;
   border: 0;
   border-radius: 3px;
-  font-size: 13px;
+  background: #fff;
+  color: #000;
+  font-family: "Segoe UI Symbol", "Arial Unicode MS", sans-serif;
+  font-size: 7px;
   line-height: 1;
 }
 
-.icon-button:hover {
-  background: #f1f3f5;
+.plain-button.icon-button:hover,
+.plain-button.icon-button:disabled {
+  border: 0;
+  background: #fff;
+  opacity: 1;
 }
 
 h2 {
@@ -253,7 +254,7 @@ h2 {
   padding: 0 5px;
 }
 
-.settings-view .icon-button {
+.settings-view .plain-button.icon-button {
   padding: 0;
 }
 
