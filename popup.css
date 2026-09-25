@@ -90,7 +90,7 @@ h1 {
 #mainView .topbar {
   justify-content: flex-start;
   flex-wrap: wrap;
-  gap: 2px 4px;
+  gap: 0 4px;
 }
 
 #mainView .portfolio-summary {
