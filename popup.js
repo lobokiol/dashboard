@@ -91,7 +91,7 @@ function formatCurrency(value, currency, locale) {
 
 function schedulePopupAutoClose() {
   clearTimeout(autoCloseTimer);
-  if (popupAutoCloseMs > 0) {
+  if (popupAutoCloseMs > 0 && settingsView.hidden) {
     autoCloseTimer = setTimeout(() => window.close(), popupAutoCloseMs);
   }
 }
