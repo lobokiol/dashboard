@@ -14,7 +14,7 @@ const exchangeRateSymbol = 'CNY=X';
 const refreshIntervalMs = 5 * 60 * 1000;
 const defaultUsdCnyRate = 7.2;
 const assetDefinitionsVersion = 1;
-const popupAutoCloseMs = 5000;
+let popupAutoCloseMs = 5000;
 const defaultHoldings = {
   BTC: 0,
   ADA: 10000,
@@ -34,6 +34,7 @@ let assets = assetDefinitions.map(asset => asset.symbol);
 let priceCurrency = 'USD';
 let totalCurrency = 'CNY';
 let usdCnyRate = defaultUsdCnyRate;
+let autoCloseTimer;
 let saveTimer;
 let draggedSymbol = '';
 
@@ -50,6 +51,7 @@ const addAssetButton = document.getElementById('addAssetButton');
 const assetMessage = document.getElementById('assetMessage');
 const priceCurrencySelect = document.getElementById('priceCurrencySelect');
 const totalCurrencySelect = document.getElementById('totalCurrencySelect');
+const popupAutoCloseSelect = document.getElementById('popupAutoCloseSelect');
 const shortcutSummary = document.getElementById('shortcutSummary');
 const shortcutSettingsButton = document.getElementById('shortcutSettingsButton');
 const milestone500kToggle = document.getElementById('milestone500kToggle');
@@ -88,7 +90,10 @@ function formatCurrency(value, currency, locale) {
 }
 
 function schedulePopupAutoClose() {
-  setTimeout(() => window.close(), popupAutoCloseMs);
+  clearTimeout(autoCloseTimer);
+  if (popupAutoCloseMs > 0) {
+    autoCloseTimer = setTimeout(() => window.close(), popupAutoCloseMs);
+  }
 }
 
 async function updateShortcutSummary() {
@@ -318,7 +323,7 @@ function updateValuations() {
 function scheduleSave() {
   clearTimeout(saveTimer);
   saveTimer = setTimeout(() => {
-    chrome.storage.local.set({ holdings, assetDefinitions, priceCurrency, totalCurrency, usdCnyRate });
+    chrome.storage.local.set({ holdings, assetDefinitions, priceCurrency, totalCurrency, usdCnyRate, popupAutoCloseMs });
   }, 250);
 }
 
@@ -331,7 +336,8 @@ function loadHoldings() {
       customAssets: [],
       priceCurrency: 'USD',
       totalCurrency: 'CNY',
-      usdCnyRate: defaultUsdCnyRate
+      usdCnyRate: defaultUsdCnyRate,
+      popupAutoCloseMs
     }, result => {
       let savedDefinitions = Array.isArray(result.assetDefinitions)
         ? result.assetDefinitions
@@ -353,8 +359,13 @@ function loadHoldings() {
       priceCurrency = result.priceCurrency === 'CNY' ? 'CNY' : 'USD';
       totalCurrency = result.totalCurrency === 'USD' ? 'USD' : 'CNY';
       usdCnyRate = PortfolioCore.resolveUsdCnyRate(undefined, result.usdCnyRate, defaultUsdCnyRate);
+      const savedAutoCloseMs = Number(result.popupAutoCloseMs);
+      popupAutoCloseMs = [0, 3000, 5000, 10000].includes(savedAutoCloseMs)
+        ? savedAutoCloseMs
+        : 5000;
       priceCurrencySelect.value = priceCurrency;
       totalCurrencySelect.value = totalCurrency;
+      popupAutoCloseSelect.value = String(popupAutoCloseMs);
       resolve();
     });
   });
@@ -402,6 +413,7 @@ async function refreshPrices() {
 
 async function initialize() {
   await loadHoldings();
+  schedulePopupAutoClose();
   createAssetRows();
   await updateShortcutSummary();
   await refreshPrices();
@@ -425,12 +437,18 @@ totalCurrencySelect.addEventListener('change', event => {
   updateValuations();
   scheduleSave();
 });
+popupAutoCloseSelect.addEventListener('change', event => {
+  popupAutoCloseMs = [0, 3000, 5000, 10000].includes(Number(event.target.value))
+    ? Number(event.target.value)
+    : 5000;
+  scheduleSave();
+  schedulePopupAutoClose();
+});
 milestoneDialogClose.addEventListener('click', () => {
   milestoneDialog.hidden = true;
 });
 shortcutSettingsButton.addEventListener('click', () => {
   chrome.tabs.create({ url: 'chrome://extensions/shortcuts' });
 });
-schedulePopupAutoClose();
 initialize();
 setInterval(refreshPrices, refreshIntervalMs);
