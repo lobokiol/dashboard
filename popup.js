@@ -285,6 +285,7 @@ function showSettings(shouldShow) {
   document.documentElement.classList.toggle('settings-mode', shouldShow);
   mainView.hidden = shouldShow;
   settingsView.hidden = !shouldShow;
+  schedulePopupAutoClose();
 }
 
 function updateValuations() {
