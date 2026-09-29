@@ -17,7 +17,6 @@ test('declares browser and global dashboard shortcuts', () => {
 test('opens the dashboard popup for both shortcut commands only', async () => {
   let commandListener;
   let popupOpenCount = 0;
-  let shortcutSession = {};
   const event = () => ({ addListener() {} });
   const context = {
     importScripts() {},
@@ -57,14 +56,6 @@ test('opens the dashboard popup for both shortcut commands only', async () => {
         local: {
           get: async defaults => defaults,
           set: async () => {}
-        },
-        session: {
-          set: async value => {
-            shortcutSession = { ...shortcutSession, ...value };
-          },
-          remove: async key => {
-            delete shortcutSession[key];
-          }
         }
       }
     },
@@ -81,8 +72,6 @@ test('opens the dashboard popup for both shortcut commands only', async () => {
   commandListener('open-dashboard');
   await new Promise(resolve => setImmediate(resolve));
   assert.equal(popupOpenCount, 1);
-  assert.ok(shortcutSession.shortcutPopupCloseAt > Date.now());
-
   commandListener('open-dashboard-global');
   await new Promise(resolve => setImmediate(resolve));
   assert.equal(popupOpenCount, 2);

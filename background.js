@@ -7,8 +7,6 @@ const MILESTONE_ALARM = 'portfolio-milestone-check';
 const MILESTONE_THRESHOLDS = [500000, 1000000];
 const MILESTONE_STATE_VERSION = 3;
 const DASHBOARD_SHORTCUT_COMMANDS = new Set(['open-dashboard', 'open-dashboard-global']);
-const SHORTCUT_POPUP_CLOSE_KEY = 'shortcutPopupCloseAt';
-const SHORTCUT_POPUP_DURATION_MS = 3000;
 const DEFAULT_ASSET_DEFINITIONS = [
   { symbol: 'BTC', type: 'crypto' },
   { symbol: 'ADA', type: 'crypto' },
@@ -224,16 +222,8 @@ function scheduleMilestoneAlarm() {
 chrome.runtime.onInstalled.addListener(scheduleMilestoneAlarm);
 chrome.runtime.onStartup.addListener(scheduleMilestoneAlarm);
 
-async function openDashboardForShortcut() {
-  await chrome.storage.session.set({
-    [SHORTCUT_POPUP_CLOSE_KEY]: Date.now() + SHORTCUT_POPUP_DURATION_MS
-  });
-
-  try {
-    await chrome.action.openPopup();
-  } catch {
-    await chrome.storage.session.remove(SHORTCUT_POPUP_CLOSE_KEY);
-  }
+function openDashboardForShortcut() {
+  chrome.action.openPopup().catch(() => {});
 }
 
 chrome.commands.onCommand.addListener(command => {

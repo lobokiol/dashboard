@@ -14,7 +14,7 @@ const exchangeRateSymbol = 'CNY=X';
 const refreshIntervalMs = 5 * 60 * 1000;
 const defaultUsdCnyRate = 7.2;
 const assetDefinitionsVersion = 1;
-const shortcutPopupCloseKey = 'shortcutPopupCloseAt';
+const popupAutoCloseMs = 3000;
 const defaultHoldings = {
   BTC: 0,
   ADA: 10000,
@@ -87,13 +87,8 @@ function formatCurrency(value, currency, locale) {
   }).format(value);
 }
 
-async function scheduleShortcutAutoClose() {
-  const stored = await chrome.storage.session.get(shortcutPopupCloseKey);
-  const closeAt = Number(stored[shortcutPopupCloseKey]);
-  await chrome.storage.session.remove(shortcutPopupCloseKey);
-  if (!Number.isFinite(closeAt) || closeAt <= Date.now()) return;
-
-  setTimeout(() => window.close(), closeAt - Date.now());
+function schedulePopupAutoClose() {
+  setTimeout(() => window.close(), popupAutoCloseMs);
 }
 
 async function updateShortcutSummary() {
@@ -436,6 +431,6 @@ milestoneDialogClose.addEventListener('click', () => {
 shortcutSettingsButton.addEventListener('click', () => {
   chrome.tabs.create({ url: 'chrome://extensions/shortcuts' });
 });
-scheduleShortcutAutoClose();
+schedulePopupAutoClose();
 initialize();
 setInterval(refreshPrices, refreshIntervalMs);
