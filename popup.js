@@ -14,7 +14,7 @@ const exchangeRateSymbol = 'CNY=X';
 const refreshIntervalMs = 5 * 60 * 1000;
 const defaultUsdCnyRate = 7.2;
 const assetDefinitionsVersion = 1;
-const popupAutoCloseMs = 3000;
+const popupAutoCloseMs = 5000;
 const defaultHoldings = {
   BTC: 0,
   ADA: 10000,
