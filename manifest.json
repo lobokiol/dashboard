@@ -1,11 +1,21 @@
 {
   "manifest_version": 3,
   "name": "Price Dashboard",
-  "version": "1.26.1",
+  "version": "1.27.0",
   "minimum_chrome_version": "127",
   "description": "实时加密货币、股票价格与持仓资产估值",
+  "icons": {
+    "16": "icon16.png",
+    "32": "icon32.png",
+    "48": "icon48.png",
+    "128": "icon128.png"
+  },
   "action": {
-    "default_popup": "popup.html"
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icon16.png",
+      "32": "icon32.png"
+    }
   },
   "background": {
     "service_worker": "background.js"
