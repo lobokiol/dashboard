@@ -93,8 +93,23 @@ h1 {
   gap: 0 4px;
 }
 
+#mainView {
+  --main-background: #f6f7f8;
+  --main-line: #e1e5e9;
+  --main-text: #18212b;
+  --main-muted: #687586;
+  --main-accent: #176b53;
+  color: var(--main-text);
+}
+
 #mainView .portfolio-summary {
   flex-shrink: 0;
+}
+
+#mainView .portfolio-summary strong {
+  color: var(--main-accent);
+  font-weight: 700;
+  letter-spacing: -0.12px;
 }
 
 .toolbar-actions {
@@ -157,6 +172,45 @@ h2 {
   color: var(--muted);
   font-size: 9px;
   font-weight: 600;
+}
+
+#mainView .asset-list {
+  background: #fff;
+}
+
+#mainView .asset-header {
+  border-color: var(--main-line);
+  background: var(--main-background);
+  color: var(--main-muted);
+}
+
+#mainView .asset-row {
+  border-color: var(--main-line);
+  transition: background-color 120ms ease;
+}
+
+#mainView .asset-row:hover {
+  background: #f8faf9;
+}
+
+#mainView .price,
+#mainView .portfolio-note {
+  color: var(--main-muted);
+}
+
+#mainView .unavailable,
+#mainView .milestone-notice {
+  color: var(--danger);
+}
+
+#mainView .plain-button:focus-visible {
+  outline-color: var(--main-accent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #mainView .asset-row {
+    transition: none;
+  }
 }
 
 .plain-button {
