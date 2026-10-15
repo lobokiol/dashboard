@@ -591,3 +591,111 @@ h2 {
   font-weight: 400;
   font-variant-numeric: tabular-nums;
 }
+
+#settingsView {
+  --settings-background: #f8f7f3;
+  --settings-surface: #fffdf9;
+  --settings-line: #ddd5c8;
+  --settings-text: #24272b;
+  --settings-muted: #676f78;
+  --settings-gold: #8b683b;
+  background: var(--settings-background);
+  color: var(--settings-text);
+}
+
+html.settings-mode body {
+  background: #f8f7f3;
+}
+
+#settingsView .topbar {
+  position: relative;
+}
+
+#settingsView .topbar::after {
+  position: absolute;
+  right: 0;
+  bottom: -1px;
+  left: 0;
+  height: 1px;
+  background: var(--settings-line);
+  content: "";
+}
+
+#settingsView .topbar h1 {
+  color: var(--settings-text);
+  font-family: "Bahnschrift", "Segoe UI", sans-serif;
+  font-weight: 650;
+  letter-spacing: 0.1px;
+}
+
+#settingsView .settings-section {
+  background: var(--settings-surface);
+}
+
+#settingsView .settings-section h2 {
+  border-bottom-color: var(--settings-line);
+  color: var(--settings-gold);
+  letter-spacing: 0.15px;
+}
+
+#settingsView .holding-row,
+#settingsView .setting-row,
+#settingsView .asset-form {
+  border-color: var(--settings-line);
+}
+
+#settingsView .holding-row:nth-child(odd) {
+  border-right-color: var(--settings-line);
+}
+
+#settingsView .setting-row > span,
+#settingsView .setting-row > label,
+#settingsView .asset-message {
+  color: var(--settings-muted);
+}
+
+#settingsView .asset-message.error {
+  color: var(--danger);
+}
+
+#settingsView .plain-button,
+#settingsView .quantity-input,
+#settingsView .setting-row select,
+#settingsView .asset-form input,
+#settingsView .asset-form select {
+  border-color: var(--settings-line);
+  background-color: var(--settings-surface);
+  color: var(--settings-text);
+}
+
+#settingsView .plain-button:hover,
+#settingsView .quantity-input:hover,
+#settingsView .setting-row select:hover,
+#settingsView .asset-form input:hover,
+#settingsView .asset-form select:hover {
+  border-color: var(--settings-gold);
+}
+
+#settingsView .quantity-input,
+#settingsView .setting-row select,
+#settingsView .shortcut-control strong {
+  font-family: "Bahnschrift", "Segoe UI", sans-serif;
+  font-variant-numeric: tabular-nums;
+}
+
+#settingsView .asset-form input::placeholder {
+  color: var(--settings-muted);
+}
+
+#settingsView .plain-button:focus-visible,
+#settingsView .quantity-input:focus-visible,
+#settingsView .setting-row select:focus-visible,
+#settingsView .asset-form input:focus-visible,
+#settingsView .asset-form select:focus-visible,
+#settingsView .drag-handle:focus-visible {
+  outline-color: var(--settings-gold);
+}
+
+#settingsView .asset-row.drag-over {
+  background: #f7f4ed;
+}
