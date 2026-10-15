@@ -94,12 +94,27 @@ h1 {
 }
 
 #mainView {
-  --main-background: #f6f7f8;
-  --main-line: #e1e5e9;
-  --main-text: #18212b;
-  --main-muted: #687586;
-  --main-accent: #176b53;
+  --main-background: #f8f7f3;
+  --main-surface: #fffdf9;
+  --main-line: #ddd5c8;
+  --main-text: #24272b;
+  --main-muted: #676f78;
+  --main-gold: #8b683b;
   color: var(--main-text);
+}
+
+#mainView .topbar {
+  position: relative;
+}
+
+#mainView .topbar::after {
+  position: absolute;
+  right: 0;
+  bottom: -1px;
+  left: 0;
+  height: 1px;
+  background: var(--main-line);
+  content: "";
 }
 
 #mainView .portfolio-summary {
@@ -107,9 +122,11 @@ h1 {
 }
 
 #mainView .portfolio-summary strong {
-  color: var(--main-accent);
-  font-weight: 700;
-  letter-spacing: -0.12px;
+  color: var(--main-gold);
+  font-family: "Bahnschrift", "Segoe UI", sans-serif;
+  font-variant-numeric: tabular-nums;
+  font-weight: 650;
+  letter-spacing: -0.2px;
 }
 
 .toolbar-actions {
@@ -175,7 +192,7 @@ h2 {
 }
 
 #mainView .asset-list {
-  background: #fff;
+  background: var(--main-surface);
 }
 
 #mainView .asset-header {
@@ -190,12 +207,22 @@ h2 {
 }
 
 #mainView .asset-row:hover {
-  background: #f8faf9;
+  background: #f7f4ed;
 }
 
 #mainView .price,
 #mainView .portfolio-note {
   color: var(--main-muted);
+}
+
+#mainView .symbol,
+#mainView .price {
+  font-variant-numeric: tabular-nums;
+}
+
+#mainView .symbol {
+  color: var(--main-text);
+  letter-spacing: 0.1px;
 }
 
 #mainView .unavailable,
@@ -204,7 +231,7 @@ h2 {
 }
 
 #mainView .plain-button:focus-visible {
-  outline-color: var(--main-accent);
+  outline-color: var(--main-gold);
 }
 
 @media (prefers-reduced-motion: reduce) {
